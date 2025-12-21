@@ -20,12 +20,13 @@ public class TitleScreenState : IGameState
     private Texture2D _pixelTexture;
     private Effect _nebulaEffect;
     private Effect _starfallEffect;
+    private SpriteFont _menuFont;
     private float _elapsedTime;
     private UIPanel _menuPanel;
-    private UIButton _newGameButton;
-    private UIButton _continueButton;
-    private UIButton _optionsButton;
-    private UIButton _exitButton;
+    private DiamondButton _newGameButton;
+    private DiamondButton _continueButton;
+    private DiamondButton _optionsButton;
+    private DiamondButton _exitButton;
 
     public TitleScreenState(ContentManager content, GameStateManager stateManager)
     {
@@ -48,6 +49,9 @@ public class TitleScreenState : IGameState
         _nebulaEffect = _content.Load<Effect>("Effects/Nebula");
         _starfallEffect = _content.Load<Effect>("Effects/Starfall");
 
+        // Load fancy menu font
+        _menuFont = _content.Load<SpriteFont>("Fonts/MenuTitle");
+
         CreateMenuUI();
     }
 
@@ -56,17 +60,18 @@ public class TitleScreenState : IGameState
         var screenWidth = GameServices.GraphicsDevice.Viewport.Width;
         var screenHeight = GameServices.GraphicsDevice.Viewport.Height;
 
-        // Menu button dimensions - scale with screen
-        var buttonWidth = (int)(screenWidth * 0.17f);  // ~220px at 1280
-        var buttonHeight = (int)(screenHeight * 0.07f); // ~50px at 720
-        var buttonSpacing = (int)(screenHeight * 0.015f); // ~12px at 720
+        // Parallelogram button dimensions - wider than tall
+        var buttonWidth = (int)(screenWidth * 0.15f);  // ~192px at 1280
+        var buttonHeight = (int)(screenHeight * 0.06f); // ~43px at 720
+        var buttonSpacing = (int)(screenHeight * 0.015f); // ~11px at 720
         var totalMenuHeight = (buttonHeight * 4) + (buttonSpacing * 3);
 
-        // Center the menu panel in the lower portion of the screen
-        var menuX = (screenWidth - buttonWidth) / 2f;
-        var menuY = screenHeight * 0.5f; // Start at 50% of screen height
+        // Position in lower left corner with margin
+        var margin = (int)(screenHeight * 0.05f);
+        var menuX = margin;
+        var menuY = screenHeight - totalMenuHeight - margin;
 
-        // Create menu panel with vertical layout (no padding since we position manually)
+        // Create menu panel with vertical layout
         _menuPanel = new UIPanel(
             new Vector2(menuX, menuY),
             new Vector2(buttonWidth, totalMenuHeight)
@@ -79,21 +84,25 @@ public class TitleScreenState : IGameState
         };
         _menuPanel.SetPadding(0);
 
-        // Create menu buttons
-        _newGameButton = new UIButton("New Game", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        // Create parallelogram menu buttons with mystical styling
+        _newGameButton = new DiamondButton("New Game", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
         _newGameButton.OnClick += OnNewGameClicked;
+        ApplyMysticalStyle(_newGameButton);
 
-        _continueButton = new UIButton("Continue", Vector2.Zero, new Vector2(buttonWidth, buttonHeight))
+        _continueButton = new DiamondButton("Continue", Vector2.Zero, new Vector2(buttonWidth, buttonHeight))
         {
             Enabled = false // Disabled until save system exists
         };
         _continueButton.OnClick += OnContinueClicked;
+        ApplyMysticalStyle(_continueButton);
 
-        _optionsButton = new UIButton("Options", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        _optionsButton = new DiamondButton("Options", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
         _optionsButton.OnClick += OnOptionsClicked;
+        ApplyMysticalStyle(_optionsButton);
 
-        _exitButton = new UIButton("Exit", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        _exitButton = new DiamondButton("Exit", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
         _exitButton.OnClick += OnExitClicked;
+        ApplyMysticalStyle(_exitButton);
 
         // Add buttons to panel
         _menuPanel.AddChild(_newGameButton);
@@ -123,6 +132,17 @@ public class TitleScreenState : IGameState
     private void OnExitClicked(UIButton button)
     {
         Environment.Exit(0);
+    }
+
+    private void ApplyMysticalStyle(UIButton button)
+    {
+        button.NormalColor = new Color(15, 4, 31);      // Deep purple
+        button.HoverColor = new Color(31, 8, 56);       // Mid purple
+        button.PressedColor = new Color(8, 3, 15);      // Nearly black purple
+        button.DisabledColor = new Color(20, 10, 30);   // Muted purple
+        button.BorderColor = new Color(179, 128, 51);   // Gold border
+        button.BorderThickness = 2;
+        button.Font = _menuFont;                        // Fancy menu font
     }
 
     public void Exit()

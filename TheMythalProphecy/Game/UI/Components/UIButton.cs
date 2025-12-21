@@ -30,6 +30,12 @@ public class UIButton : UIElement
         set => _label.Text = value;
     }
 
+    public SpriteFont Font
+    {
+        get => _label.Font;
+        set => _label.Font = value;
+    }
+
     public Color NormalColor { get; set; } = new Color(60, 60, 80);
     public Color HoverColor { get; set; } = new Color(80, 120, 160);
     public Color PressedColor { get; set; } = new Color(60, 100, 140);
@@ -42,6 +48,11 @@ public class UIButton : UIElement
     public Texture2D PressedTexture { get; set; }
 
     public new event Action<UIButton> OnClick;
+
+    protected void InvokeClick()
+    {
+        OnClick?.Invoke(this);
+    }
 
     public UIButton()
     {
