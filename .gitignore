@@ -23,12 +23,9 @@ bld/
 *.userprefs
 *.sln.docstates
 
-# MonoGame
-*.mgcb
+# MonoGame Content (keep source files, ignore compiled outputs)
 *.mgcontent
 *.mgstats
-
-# MonoGame Content (keep the source files, ignore compiled)
 **/Content/bin/
 **/Content/obj/
 

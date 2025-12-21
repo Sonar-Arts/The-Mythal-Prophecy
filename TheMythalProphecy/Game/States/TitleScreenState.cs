@@ -17,6 +17,9 @@ public class TitleScreenState : IGameState
     private readonly GameStateManager _stateManager;
 
     private Texture2D _logoTexture;
+    private Texture2D _pixelTexture;
+    private Effect _starfallEffect;
+    private float _elapsedTime;
     private UIPanel _menuPanel;
     private UIButton _newGameButton;
     private UIButton _continueButton;
@@ -35,6 +38,13 @@ public class TitleScreenState : IGameState
         var logoPath = Path.Combine("Game", "Art", "Logos", "TMP Logo.png");
         using var stream = File.OpenRead(logoPath);
         _logoTexture = Texture2D.FromStream(GameServices.GraphicsDevice, stream);
+
+        // Create 1x1 white pixel for full-screen shader quad
+        _pixelTexture = new Texture2D(GameServices.GraphicsDevice, 1, 1);
+        _pixelTexture.SetData(new[] { Color.White });
+
+        // Load starfall shader effect
+        _starfallEffect = _content.Load<Effect>("Effects/Starfall");
 
         CreateMenuUI();
     }
@@ -119,6 +129,7 @@ public class TitleScreenState : IGameState
         GameServices.UI.RemoveElement(_menuPanel);
 
         _logoTexture?.Dispose();
+        _pixelTexture?.Dispose();
     }
 
     public void Pause()
@@ -140,6 +151,9 @@ public class TitleScreenState : IGameState
 
     public void Update(GameTime gameTime)
     {
+        // Track elapsed time for shader animation
+        _elapsedTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
         // UI input is handled by UIManager
     }
 
@@ -164,7 +178,7 @@ public class TitleScreenState : IGameState
             screenHeight * 0.25f
         );
 
-        // Draw logo (SpriteBatch is already begun by MythalGame)
+        // Draw logo normally (SpriteBatch already begun by MythalGame)
         spriteBatch.Draw(
             _logoTexture,
             logoPosition,
@@ -176,6 +190,29 @@ public class TitleScreenState : IGameState
             SpriteEffects.None,
             0f
         );
+
+        // End current batch to draw starfall overlay
+        spriteBatch.End();
+
+        // Set shader parameters
+        _starfallEffect.Parameters["Time"]?.SetValue(_elapsedTime);
+        _starfallEffect.Parameters["Resolution"]?.SetValue(new Vector2(screenWidth, screenHeight));
+        _starfallEffect.Parameters["Intensity"]?.SetValue(0.7f);
+
+        // Draw full-screen starfall overlay with additive blending
+        spriteBatch.Begin(
+            blendState: BlendState.Additive,
+            effect: _starfallEffect
+        );
+        spriteBatch.Draw(
+            _pixelTexture,
+            new Rectangle(0, 0, screenWidth, screenHeight),
+            Color.White
+        );
+        spriteBatch.End();
+
+        // Resume normal batch for remaining draws
+        spriteBatch.Begin();
 
         // UI elements are drawn by UIManager in MythalGame.Draw()
     }
