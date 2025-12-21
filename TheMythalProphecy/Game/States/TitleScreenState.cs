@@ -1,89 +1,182 @@
+using System;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Content;
 using TheMythalProphecy.Game.Core;
+using TheMythalProphecy.Game.UI.Components;
 
 namespace TheMythalProphecy.Game.States;
 
 /// <summary>
-/// Title screen state - displays game title and waits for player input to start
+/// Title screen state - displays game logo and main menu
 /// </summary>
 public class TitleScreenState : IGameState
 {
     private readonly ContentManager _content;
     private readonly GameStateManager _stateManager;
-    private SpriteFont _font;
 
-    private readonly string _title = "The Mythal Prophecy";
-    private readonly string _prompt = "Press Enter to Start";
-
-    private float _promptAlpha;
-    private float _promptAlphaDirection = 1.0f;
+    private Texture2D _logoTexture;
+    private UIPanel _menuPanel;
+    private UIButton _newGameButton;
+    private UIButton _continueButton;
+    private UIButton _optionsButton;
+    private UIButton _exitButton;
 
     public TitleScreenState(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;
-        _promptAlpha = 1.0f;
     }
 
     public void Enter()
     {
-        _font = _content.Load<SpriteFont>("Fonts/Default");
+        // Load logo texture
+        var logoPath = Path.Combine("Game", "Art", "Logos", "TMP Logo.png");
+        using var stream = File.OpenRead(logoPath);
+        _logoTexture = Texture2D.FromStream(GameServices.GraphicsDevice, stream);
+
+        CreateMenuUI();
+    }
+
+    private void CreateMenuUI()
+    {
+        var screenWidth = GameServices.GraphicsDevice.Viewport.Width;
+        var screenHeight = GameServices.GraphicsDevice.Viewport.Height;
+
+        // Menu button dimensions - scale with screen
+        var buttonWidth = (int)(screenWidth * 0.17f);  // ~220px at 1280
+        var buttonHeight = (int)(screenHeight * 0.07f); // ~50px at 720
+        var buttonSpacing = (int)(screenHeight * 0.015f); // ~12px at 720
+        var totalMenuHeight = (buttonHeight * 4) + (buttonSpacing * 3);
+
+        // Center the menu panel in the lower portion of the screen
+        var menuX = (screenWidth - buttonWidth) / 2f;
+        var menuY = screenHeight * 0.5f; // Start at 50% of screen height
+
+        // Create menu panel with vertical layout (no padding since we position manually)
+        _menuPanel = new UIPanel(
+            new Vector2(menuX, menuY),
+            new Vector2(buttonWidth, totalMenuHeight)
+        )
+        {
+            Layout = PanelLayout.Vertical,
+            Spacing = buttonSpacing,
+            DrawBackground = false,
+            DrawBorder = false
+        };
+        _menuPanel.SetPadding(0);
+
+        // Create menu buttons
+        _newGameButton = new UIButton("New Game", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        _newGameButton.OnClick += OnNewGameClicked;
+
+        _continueButton = new UIButton("Continue", Vector2.Zero, new Vector2(buttonWidth, buttonHeight))
+        {
+            Enabled = false // Disabled until save system exists
+        };
+        _continueButton.OnClick += OnContinueClicked;
+
+        _optionsButton = new UIButton("Options", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        _optionsButton.OnClick += OnOptionsClicked;
+
+        _exitButton = new UIButton("Exit", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        _exitButton.OnClick += OnExitClicked;
+
+        // Add buttons to panel
+        _menuPanel.AddChild(_newGameButton);
+        _menuPanel.AddChild(_continueButton);
+        _menuPanel.AddChild(_optionsButton);
+        _menuPanel.AddChild(_exitButton);
+
+        // Register with UI manager
+        GameServices.UI.AddElement(_menuPanel);
+    }
+
+    private void OnNewGameClicked(UIButton button)
+    {
+        _stateManager.ChangeState(new WorldMapState(_stateManager));
+    }
+
+    private void OnContinueClicked(UIButton button)
+    {
+        // TODO: Load saved game when save system is implemented
+    }
+
+    private void OnOptionsClicked(UIButton button)
+    {
+        _stateManager.PushState(new OptionsMenuState(_stateManager));
+    }
+
+    private void OnExitClicked(UIButton button)
+    {
+        Environment.Exit(0);
     }
 
     public void Exit()
     {
+        // Unregister UI elements
+        GameServices.UI.RemoveElement(_menuPanel);
+
+        _logoTexture?.Dispose();
+    }
+
+    public void Pause()
+    {
+        // Hide UI when another state is pushed on top
+        if (_menuPanel != null)
+            _menuPanel.Visible = false;
+    }
+
+    public void Resume()
+    {
+        // Show UI when this state becomes active again
+        if (_menuPanel != null)
+            _menuPanel.Visible = true;
+
+        // Note: TitleScreenState doesn't use keyboard input directly,
+        // but keeping pattern consistent for future changes
     }
 
     public void Update(GameTime gameTime)
     {
-        // Animate the prompt text (fade in/out)
-        _promptAlpha += _promptAlphaDirection * (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        if (_promptAlpha >= 1.0f)
-        {
-            _promptAlpha = 1.0f;
-            _promptAlphaDirection = -1.0f;
-        }
-        else if (_promptAlpha <= 0.3f)
-        {
-            _promptAlpha = 0.3f;
-            _promptAlphaDirection = 1.0f;
-        }
-
-        // Check for Enter key to start game
-        if (GameServices.Input.IsAcceptPressed())
-        {
-            // Transition to world map (main game state)
-            _stateManager.ChangeState(new WorldMapState(_stateManager));
-        }
+        // UI input is handled by UIManager
     }
 
     public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        spriteBatch.Begin();
+        // Clear to black background
+        GameServices.GraphicsDevice.Clear(Color.Black);
 
-        // Calculate positions for centered text
-        var titleSize = _font.MeasureString(_title);
-        var titlePosition = new Vector2(
-            (1280 - titleSize.X) / 2,
-            300
+        // Get screen dimensions
+        var screenWidth = GameServices.GraphicsDevice.Viewport.Width;
+        var screenHeight = GameServices.GraphicsDevice.Viewport.Height;
+
+        // Scale logo to fit 50% of screen width
+        var targetWidth = screenWidth * 0.5f;
+        var logoScale = targetWidth / _logoTexture.Width;
+        var logoWidth = _logoTexture.Width * logoScale;
+        var logoHeight = _logoTexture.Height * logoScale;
+
+        // Center logo horizontally, position at 25% from top of screen
+        var logoPosition = new Vector2(
+            (screenWidth - logoWidth) / 2f,
+            screenHeight * 0.25f
         );
 
-        var promptSize = _font.MeasureString(_prompt);
-        var promptPosition = new Vector2(
-            (1280 - promptSize.X) / 2,
-            450
+        // Draw logo (SpriteBatch is already begun by MythalGame)
+        spriteBatch.Draw(
+            _logoTexture,
+            logoPosition,
+            null,
+            Color.White,
+            0f,
+            Vector2.Zero,
+            logoScale,
+            SpriteEffects.None,
+            0f
         );
 
-        // Draw title
-        spriteBatch.DrawString(_font, _title, titlePosition, Color.White);
-
-        // Draw prompt with fading animation
-        var promptColor = Color.White * _promptAlpha;
-        spriteBatch.DrawString(_font, _prompt, promptPosition, promptColor);
-
-        spriteBatch.End();
+        // UI elements are drawn by UIManager in MythalGame.Draw()
     }
 }

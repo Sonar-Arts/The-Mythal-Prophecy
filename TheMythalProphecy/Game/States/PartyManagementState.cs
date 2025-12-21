@@ -107,6 +107,23 @@ public class PartyManagementState : IGameState
         GameServices.UI.RemoveElement(_window);
     }
 
+    public void Pause()
+    {
+        // Hide window when another state is pushed on top
+        if (_window != null)
+            _window.Visible = false;
+    }
+
+    public void Resume()
+    {
+        // Show window when this state becomes active again
+        if (_window != null)
+            _window.Visible = true;
+
+        // Reset keyboard state to prevent immediate re-triggering
+        _previousKeyState = Keyboard.GetState();
+    }
+
     public void Update(GameTime gameTime)
     {
         KeyboardState keyState = Keyboard.GetState();

@@ -255,5 +255,21 @@ namespace TheMythalProphecy.Game.UI.HUD
         {
             IsVisible = true;
         }
+
+        /// <summary>
+        /// Hide the HUD (alias for HideAll)
+        /// </summary>
+        public void Hide()
+        {
+            IsVisible = false;
+        }
+
+        /// <summary>
+        /// Show the HUD (alias for ShowAll)
+        /// </summary>
+        public void Show()
+        {
+            IsVisible = true;
+        }
     }
 }

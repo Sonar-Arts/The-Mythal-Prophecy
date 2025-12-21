@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -15,12 +16,17 @@ public class OptionsMenuState : IGameState
     private readonly GameStateManager _stateManager;
     private UIWindow _window;
     private UIListBox _categoryList;
-    private UIPanel _settingsPanel;
     private KeyboardState _previousKeyState;
 
     private GameSettings _settings;
 
-    // Audio controls
+    // Layout panels
+    private UIPanel _settingsContainer;
+    private UIPanel _audioPanel;
+    private UIPanel _videoPanel;
+    private UIPanel _buttonPanel;
+
+    // Audio controls (references for dynamic updates)
     private UILabel _masterVolumeLabel;
     private UISlider _masterVolumeSlider;
     private UILabel _musicVolumeLabel;
@@ -28,15 +34,16 @@ public class OptionsMenuState : IGameState
     private UILabel _sfxVolumeLabel;
     private UISlider _sfxVolumeSlider;
 
-    // Video controls
-    private UILabel _resolutionLabel;
+    // Video controls (references for dynamic updates)
     private UIButton _resolutionButton;
-    private UILabel _fullscreenLabel;
     private UIButton _fullscreenButton;
 
     // Buttons
     private UIButton _applyButton;
     private UIButton _cancelButton;
+
+    // Layout dimensions (calculated from screen size)
+    private float _settingsWidth;
 
     private int _selectedResolutionIndex = 0;
     private readonly (int Width, int Height)[] _resolutions = new[]
@@ -57,68 +64,66 @@ public class OptionsMenuState : IGameState
         // Load current settings
         _settings = GameSettings.Load();
 
-        // Create window (800x600)
+        // Calculate responsive window size
         int screenWidth = GameServices.GraphicsDevice.Viewport.Width;
         int screenHeight = GameServices.GraphicsDevice.Viewport.Height;
 
-        Vector2 windowSize = new Vector2(800, 600);
-        Vector2 windowPos = new Vector2(
-            (screenWidth - windowSize.X) / 2,
-            (screenHeight - windowSize.Y) / 2
-        );
+        int windowWidth = Math.Clamp((int)(screenWidth * 0.6f), 700, 1000);
+        int windowHeight = Math.Clamp((int)(screenHeight * 0.7f), 500, 700);
 
-        _window = new UIWindow(windowPos, windowSize, "Options")
+        _window = new UIWindow(Vector2.Zero, new Vector2(windowWidth, windowHeight), "Options")
         {
             IsModal = true,
             ShowCloseButton = false
         };
+        _window.Center(screenWidth, screenHeight);
 
-        // Left: Category list
-        _categoryList = new UIListBox(new Vector2(10, 10), new Vector2(150, 480))
-        {
-            ItemHeight = 40
-        };
-        _categoryList.AddItem("Audio");
-        _categoryList.AddItem("Video");
-        _categoryList.SelectedIndex = 0;
-        _categoryList.OnSelectionChanged += OnCategoryChanged;
-        _window.ContentPanel.AddChild(_categoryList);
+        // Disable auto-layout on content panel (we position main areas manually)
+        _window.ContentPanel.Layout = PanelLayout.None;
 
-        // Right: Settings panel
-        _settingsPanel = new UIPanel(new Vector2(170, 10), new Vector2(610, 480))
-        {
-            BackgroundColor = new Color(30, 30, 50, 200)
-        };
-        _window.ContentPanel.AddChild(_settingsPanel);
+        // Calculate layout dimensions
+        float contentHeight = windowHeight - _window.TitleBarHeight;
+        float buttonAreaHeight = 60;
+        float mainAreaHeight = contentHeight - buttonAreaHeight;
+        float categoryListWidth = 160;
+        float margin = 10;
+        _settingsWidth = windowWidth - categoryListWidth - (margin * 3);
 
-        // Bottom: Apply/Cancel buttons
-        _applyButton = new UIButton("Apply", new Vector2(10, 500), new Vector2(150, 40));
-        _applyButton.OnClick += OnApplyClicked;
-        _window.ContentPanel.AddChild(_applyButton);
+        // Create main layout areas
+        CreateCategoryList(mainAreaHeight, categoryListWidth, margin);
+        CreateSettingsContainer(mainAreaHeight, categoryListWidth, margin);
+        CreateButtonPanel(contentHeight - buttonAreaHeight, margin);
 
-        _cancelButton = new UIButton("Cancel", new Vector2(170, 500), new Vector2(150, 40));
-        _cancelButton.OnClick += OnCancelClicked;
-        _window.ContentPanel.AddChild(_cancelButton);
+        // Create category-specific panels
+        CreateAudioPanel();
+        CreateVideoPanel();
 
-        // Create audio controls
-        CreateAudioControls();
-
-        // Create video controls (hidden initially)
-        CreateVideoControls();
-
-        // Register window
+        // Register window and show initial category
         GameServices.UI.AddElement(_window);
-
-        // Give focus to category list
         _categoryList.IsFocused = true;
-
-        // Show audio settings by default
-        ShowAudioSettings();
+        SwitchToCategory(0);
     }
 
     public void Exit()
     {
         GameServices.UI.RemoveElement(_window);
+    }
+
+    public void Pause()
+    {
+        // Hide window when another state is pushed on top
+        if (_window != null)
+            _window.Visible = false;
+    }
+
+    public void Resume()
+    {
+        // Show window when this state becomes active again
+        if (_window != null)
+            _window.Visible = true;
+
+        // Reset keyboard state to prevent immediate re-triggering
+        _previousKeyState = Keyboard.GetState();
     }
 
     public void Update(GameTime gameTime)
@@ -141,59 +146,136 @@ public class OptionsMenuState : IGameState
     }
 
     /// <summary>
-    /// Create audio control widgets
+    /// Create the category list on the left side
     /// </summary>
-    private void CreateAudioControls()
+    private void CreateCategoryList(float height, float width, float margin)
     {
-        // Master Volume
-        _masterVolumeLabel = new UILabel($"Master Volume: {(int)(_settings.MasterVolume * 100)}%", new Vector2(10, 10));
-        _masterVolumeLabel.TextColor = Color.White;
-        _settingsPanel.AddChild(_masterVolumeLabel);
+        _categoryList = new UIListBox(new Vector2(margin, margin), new Vector2(width, height - margin * 2))
+        {
+            ItemHeight = 40
+        };
+        _categoryList.AddItem("Audio");
+        _categoryList.AddItem("Video");
+        _categoryList.SelectedIndex = 0;
+        _categoryList.OnSelectionChanged += OnCategoryChanged;
+        _window.ContentPanel.AddChild(_categoryList);
+    }
 
-        _masterVolumeSlider = new UISlider(new Vector2(10, 40), new Vector2(580, 20), 0, 1, _settings.MasterVolume);
+    /// <summary>
+    /// Create the settings container on the right side
+    /// </summary>
+    private void CreateSettingsContainer(float height, float categoryListWidth, float margin)
+    {
+        float xPos = categoryListWidth + margin * 2;
+        _settingsContainer = new UIPanel(new Vector2(xPos, margin), new Vector2(_settingsWidth, height - margin * 2))
+        {
+            BackgroundColor = new Color(30, 30, 50, 200),
+            Layout = PanelLayout.None
+        };
+        _settingsContainer.SetPadding(0);
+        _window.ContentPanel.AddChild(_settingsContainer);
+    }
+
+    /// <summary>
+    /// Create the button panel at the bottom
+    /// </summary>
+    private void CreateButtonPanel(float yPosition, float margin)
+    {
+        _buttonPanel = new UIPanel(new Vector2(margin, yPosition), new Vector2(320, 50))
+        {
+            Layout = PanelLayout.Horizontal,
+            Spacing = 10,
+            DrawBackground = false,
+            DrawBorder = false
+        };
+        _buttonPanel.SetPadding(0);
+
+        _applyButton = new UIButton("Apply", Vector2.Zero, new Vector2(150, 40));
+        _applyButton.OnClick += OnApplyClicked;
+        _buttonPanel.AddChild(_applyButton);
+
+        _cancelButton = new UIButton("Cancel", Vector2.Zero, new Vector2(150, 40));
+        _cancelButton.OnClick += OnCancelClicked;
+        _buttonPanel.AddChild(_cancelButton);
+
+        _window.ContentPanel.AddChild(_buttonPanel);
+    }
+
+    /// <summary>
+    /// Create audio settings panel with vertical layout
+    /// </summary>
+    private void CreateAudioPanel()
+    {
+        _audioPanel = new UIPanel(Vector2.Zero, new Vector2(_settingsWidth, 400))
+        {
+            Layout = PanelLayout.Vertical,
+            Spacing = 8,
+            DrawBackground = false,
+            DrawBorder = false
+        };
+        _audioPanel.SetPadding(15);
+
+        float sliderWidth = _settingsWidth - 40;
+
+        // Master Volume
+        _masterVolumeLabel = new UILabel($"Master Volume: {(int)(_settings.MasterVolume * 100)}%", Vector2.Zero)
+        {
+            TextColor = Color.White
+        };
+        _audioPanel.AddChild(_masterVolumeLabel);
+
+        _masterVolumeSlider = new UISlider(Vector2.Zero, new Vector2(sliderWidth, 24), 0, 1, _settings.MasterVolume);
         _masterVolumeSlider.OnValueChanged += (slider, value) =>
         {
             _settings.MasterVolume = value;
             _masterVolumeLabel.Text = $"Master Volume: {(int)(value * 100)}%";
         };
-        _settingsPanel.AddChild(_masterVolumeSlider);
+        _audioPanel.AddChild(_masterVolumeSlider);
 
         // Music Volume
-        _musicVolumeLabel = new UILabel($"Music Volume: {(int)(_settings.MusicVolume * 100)}%", new Vector2(10, 80));
-        _musicVolumeLabel.TextColor = Color.White;
-        _settingsPanel.AddChild(_musicVolumeLabel);
+        _musicVolumeLabel = new UILabel($"Music Volume: {(int)(_settings.MusicVolume * 100)}%", Vector2.Zero)
+        {
+            TextColor = Color.White
+        };
+        _audioPanel.AddChild(_musicVolumeLabel);
 
-        _musicVolumeSlider = new UISlider(new Vector2(10, 110), new Vector2(580, 20), 0, 1, _settings.MusicVolume);
+        _musicVolumeSlider = new UISlider(Vector2.Zero, new Vector2(sliderWidth, 24), 0, 1, _settings.MusicVolume);
         _musicVolumeSlider.OnValueChanged += (slider, value) =>
         {
             _settings.MusicVolume = value;
             _musicVolumeLabel.Text = $"Music Volume: {(int)(value * 100)}%";
         };
-        _settingsPanel.AddChild(_musicVolumeSlider);
+        _audioPanel.AddChild(_musicVolumeSlider);
 
         // SFX Volume
-        _sfxVolumeLabel = new UILabel($"SFX Volume: {(int)(_settings.SFXVolume * 100)}%", new Vector2(10, 150));
-        _sfxVolumeLabel.TextColor = Color.White;
-        _settingsPanel.AddChild(_sfxVolumeLabel);
+        _sfxVolumeLabel = new UILabel($"SFX Volume: {(int)(_settings.SFXVolume * 100)}%", Vector2.Zero)
+        {
+            TextColor = Color.White
+        };
+        _audioPanel.AddChild(_sfxVolumeLabel);
 
-        _sfxVolumeSlider = new UISlider(new Vector2(10, 180), new Vector2(580, 20), 0, 1, _settings.SFXVolume);
+        _sfxVolumeSlider = new UISlider(Vector2.Zero, new Vector2(sliderWidth, 24), 0, 1, _settings.SFXVolume);
         _sfxVolumeSlider.OnValueChanged += (slider, value) =>
         {
             _settings.SFXVolume = value;
             _sfxVolumeLabel.Text = $"SFX Volume: {(int)(value * 100)}%";
         };
-        _settingsPanel.AddChild(_sfxVolumeSlider);
+        _audioPanel.AddChild(_sfxVolumeSlider);
     }
 
     /// <summary>
-    /// Create video control widgets
+    /// Create video settings panel with vertical layout
     /// </summary>
-    private void CreateVideoControls()
+    private void CreateVideoPanel()
     {
-        // Resolution
-        _resolutionLabel = new UILabel("Resolution:", new Vector2(10, 10));
-        _resolutionLabel.TextColor = Color.White;
-        _settingsPanel.AddChild(_resolutionLabel);
+        _videoPanel = new UIPanel(Vector2.Zero, new Vector2(_settingsWidth, 400))
+        {
+            Layout = PanelLayout.Vertical,
+            Spacing = 8,
+            DrawBackground = false,
+            DrawBorder = false
+        };
+        _videoPanel.SetPadding(15);
 
         // Find current resolution index
         for (int i = 0; i < _resolutions.Length; i++)
@@ -206,59 +288,48 @@ public class OptionsMenuState : IGameState
             }
         }
 
+        // Resolution label
+        var resolutionLabel = new UILabel("Resolution:", Vector2.Zero)
+        {
+            TextColor = Color.White
+        };
+        _videoPanel.AddChild(resolutionLabel);
+
+        // Resolution button
         var currentRes = _resolutions[_selectedResolutionIndex];
-        _resolutionButton = new UIButton($"{currentRes.Width} x {currentRes.Height}", new Vector2(10, 40), new Vector2(300, 40));
+        _resolutionButton = new UIButton($"{currentRes.Width} x {currentRes.Height}", Vector2.Zero, new Vector2(300, 40));
         _resolutionButton.OnClick += OnResolutionClicked;
-        _settingsPanel.AddChild(_resolutionButton);
+        _videoPanel.AddChild(_resolutionButton);
 
-        // Fullscreen
-        _fullscreenLabel = new UILabel("Fullscreen:", new Vector2(10, 100));
-        _fullscreenLabel.TextColor = Color.White;
-        _settingsPanel.AddChild(_fullscreenLabel);
+        // Fullscreen label
+        var fullscreenLabel = new UILabel("Fullscreen:", Vector2.Zero)
+        {
+            TextColor = Color.White
+        };
+        _videoPanel.AddChild(fullscreenLabel);
 
-        _fullscreenButton = new UIButton(_settings.Fullscreen ? "On" : "Off", new Vector2(10, 130), new Vector2(150, 40));
+        // Fullscreen button
+        _fullscreenButton = new UIButton(_settings.Fullscreen ? "On" : "Off", Vector2.Zero, new Vector2(150, 40));
         _fullscreenButton.OnClick += OnFullscreenClicked;
-        _settingsPanel.AddChild(_fullscreenButton);
+        _videoPanel.AddChild(_fullscreenButton);
     }
 
     /// <summary>
-    /// Show audio settings
+    /// Switch to the specified category panel
     /// </summary>
-    private void ShowAudioSettings()
+    private void SwitchToCategory(int index)
     {
-        // Hide video controls
-        _resolutionLabel.Visible = false;
-        _resolutionButton.Visible = false;
-        _fullscreenLabel.Visible = false;
-        _fullscreenButton.Visible = false;
+        _settingsContainer.ClearChildren();
 
-        // Show audio controls
-        _masterVolumeLabel.Visible = true;
-        _masterVolumeSlider.Visible = true;
-        _musicVolumeLabel.Visible = true;
-        _musicVolumeSlider.Visible = true;
-        _sfxVolumeLabel.Visible = true;
-        _sfxVolumeSlider.Visible = true;
-    }
+        var panel = index switch
+        {
+            0 => _audioPanel,
+            1 => _videoPanel,
+            _ => _audioPanel
+        };
 
-    /// <summary>
-    /// Show video settings
-    /// </summary>
-    private void ShowVideoSettings()
-    {
-        // Hide audio controls
-        _masterVolumeLabel.Visible = false;
-        _masterVolumeSlider.Visible = false;
-        _musicVolumeLabel.Visible = false;
-        _musicVolumeSlider.Visible = false;
-        _sfxVolumeLabel.Visible = false;
-        _sfxVolumeSlider.Visible = false;
-
-        // Show video controls
-        _resolutionLabel.Visible = true;
-        _resolutionButton.Visible = true;
-        _fullscreenLabel.Visible = true;
-        _fullscreenButton.Visible = true;
+        panel.Size = new Vector2(_settingsWidth, _settingsContainer.Size.Y);
+        _settingsContainer.AddChild(panel);
     }
 
     /// <summary>
@@ -266,15 +337,7 @@ public class OptionsMenuState : IGameState
     /// </summary>
     private void OnCategoryChanged(UIListBox sender, int index)
     {
-        switch (index)
-        {
-            case 0: // Audio
-                ShowAudioSettings();
-                break;
-            case 1: // Video
-                ShowVideoSettings();
-                break;
-        }
+        SwitchToCategory(index);
     }
 
     /// <summary>

@@ -5,9 +5,9 @@ using System;
 namespace TheMythalProphecy.Game.UI.Components;
 
 /// <summary>
-/// Button states
+/// UI Button visual states
 /// </summary>
-public enum ButtonState
+public enum UIButtonState
 {
     Normal,
     Hover,
@@ -21,7 +21,7 @@ public enum ButtonState
 public class UIButton : UIElement
 {
     private UILabel _label;
-    private ButtonState _state = ButtonState.Normal;
+    private UIButtonState _state = UIButtonState.Normal;
     private bool _isPressed;
 
     public string Text
@@ -65,19 +65,19 @@ public class UIButton : UIElement
         // Update button state
         if (!Enabled)
         {
-            _state = ButtonState.Disabled;
+            _state = UIButtonState.Disabled;
         }
         else if (_isPressed)
         {
-            _state = ButtonState.Pressed;
+            _state = UIButtonState.Pressed;
         }
         else if (IsHovered)
         {
-            _state = ButtonState.Hover;
+            _state = UIButtonState.Hover;
         }
         else
         {
-            _state = ButtonState.Normal;
+            _state = UIButtonState.Normal;
         }
 
         // Update label size to match button
@@ -98,17 +98,17 @@ public class UIButton : UIElement
         // Get texture based on state
         Texture2D texture = _state switch
         {
-            ButtonState.Hover => HoverTexture ?? NormalTexture,
-            ButtonState.Pressed => PressedTexture ?? HoverTexture ?? NormalTexture,
+            UIButtonState.Hover => HoverTexture ?? NormalTexture,
+            UIButtonState.Pressed => PressedTexture ?? HoverTexture ?? NormalTexture,
             _ => NormalTexture
         };
 
         // Get color based on state
         Color backgroundColor = _state switch
         {
-            ButtonState.Hover => HoverColor,
-            ButtonState.Pressed => PressedColor,
-            ButtonState.Disabled => DisabledColor,
+            UIButtonState.Hover => HoverColor,
+            UIButtonState.Pressed => PressedColor,
+            UIButtonState.Disabled => DisabledColor,
             _ => NormalColor
         };
 

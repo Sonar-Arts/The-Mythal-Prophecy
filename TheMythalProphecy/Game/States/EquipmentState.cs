@@ -1,8 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System.Collections.Generic;
-using System.Linq;
 using TheMythalProphecy.Game.Core;
 using TheMythalProphecy.Game.Data.Definitions;
 using TheMythalProphecy.Game.Entities;
@@ -19,15 +20,31 @@ public class EquipmentState : IGameState
 {
     private readonly GameStateManager _stateManager;
     private UIWindow _window;
+    private KeyboardState _previousKeyState;
+
+    // Layout panels
+    private UIPanel _rightPanel;
+
+    // Character list
     private UIListBox _characterList;
+
+    // Equipped panel and labels
     private UIPanel _equippedPanel;
     private UILabel _weaponLabel;
     private UILabel _armorLabel;
     private UILabel _accessoryLabel;
+
+    // Available equipment
     private UIListBox _availableEquipmentList;
+
+    // Stats comparison
     private UIPanel _statsPanel;
     private UILabel _statsComparisonLabel;
-    private KeyboardState _previousKeyState;
+
+    // Layout dimensions (calculated from screen size)
+    private float _characterListWidth;
+    private float _equippedPanelWidth;
+    private float _rightPanelWidth;
 
     // Currently selected character and slot
     private Entity _selectedCharacter;
@@ -41,29 +58,64 @@ public class EquipmentState : IGameState
 
     public void Enter()
     {
-        // Create window (1000x600)
+        // Calculate responsive window size
         int screenWidth = GameServices.GraphicsDevice.Viewport.Width;
         int screenHeight = GameServices.GraphicsDevice.Viewport.Height;
 
-        Vector2 windowSize = new Vector2(1000, 600);
-        Vector2 windowPos = new Vector2(
-            (screenWidth - windowSize.X) / 2,
-            (screenHeight - windowSize.Y) / 2
-        );
+        int windowWidth = Math.Clamp((int)(screenWidth * 0.75f), 900, 1200);
+        int windowHeight = Math.Clamp((int)(screenHeight * 0.75f), 550, 750);
 
-        _window = new UIWindow(windowPos, windowSize, "Equipment")
+        _window = new UIWindow(Vector2.Zero, new Vector2(windowWidth, windowHeight), "Equipment")
         {
             IsModal = true,
             ShowCloseButton = false
         };
+        _window.Center(screenWidth, screenHeight);
 
-        // Left: Character list (200px)
-        _characterList = new UIListBox(new Vector2(10, 10), new Vector2(200, 450))
+        // Disable auto-layout on content panel (we position columns manually)
+        _window.ContentPanel.Layout = PanelLayout.None;
+
+        // Calculate layout dimensions
+        float contentHeight = windowHeight - _window.TitleBarHeight;
+        float instructionsHeight = 40;
+        float mainAreaHeight = contentHeight - instructionsHeight;
+        float margin = 10;
+
+        _characterListWidth = 180;
+        _equippedPanelWidth = 220;
+        _rightPanelWidth = windowWidth - _characterListWidth - _equippedPanelWidth - margin * 4;
+
+        // Create layout sections
+        CreateCharacterList(mainAreaHeight, margin);
+        CreateEquippedPanel(mainAreaHeight, margin);
+        CreateRightPanel(mainAreaHeight, margin);
+        CreateInstructions(contentHeight - instructionsHeight, margin);
+
+        // Register window
+        GameServices.UI.AddElement(_window);
+
+        // Give focus to character list
+        _characterList.IsFocused = true;
+
+        // Set initial character selection (must be after all UI is created)
+        if (_characterList.Items.Count > 0)
+        {
+            _characterList.SelectedIndex = 0;
+        }
+    }
+
+    /// <summary>
+    /// Create character list on the left
+    /// </summary>
+    private void CreateCharacterList(float height, float margin)
+    {
+        _characterList = new UIListBox(
+            new Vector2(margin, margin),
+            new Vector2(_characterListWidth, height - margin * 2))
         {
             ItemHeight = 50
         };
         _characterList.OnSelectionChanged += OnCharacterSelectionChanged;
-        _window.ContentPanel.AddChild(_characterList);
 
         // Populate character list
         var party = GameServices.GameData.Party.ActiveParty;
@@ -73,76 +125,139 @@ public class EquipmentState : IGameState
             string displayName = $"{character.Name}\nLv.{stats.Level}";
             _characterList.AddItem(displayName);
         }
-        if (_characterList.Items.Count > 0)
-        {
-            _characterList.SelectedIndex = 0;
-        }
 
-        // Middle: Equipped items panel (250px)
-        _equippedPanel = new UIPanel(new Vector2(220, 10), new Vector2(250, 450))
+        _window.ContentPanel.AddChild(_characterList);
+    }
+
+    /// <summary>
+    /// Create equipped items panel in the middle
+    /// </summary>
+    private void CreateEquippedPanel(float height, float margin)
+    {
+        float xPos = _characterListWidth + margin * 2;
+
+        _equippedPanel = new UIPanel(
+            new Vector2(xPos, margin),
+            new Vector2(_equippedPanelWidth, height - margin * 2))
         {
-            BackgroundColor = new Color(30, 30, 50, 200)
+            BackgroundColor = new Color(30, 30, 50, 200),
+            Layout = PanelLayout.Vertical,
+            Spacing = 15
         };
+        _equippedPanel.SetPadding(15);
 
-        var equippedTitle = new UILabel("Equipped", new Vector2(10, 10));
-        equippedTitle.TextColor = Color.Gold;
+        var equippedTitle = new UILabel("Equipped", Vector2.Zero)
+        {
+            TextColor = Color.Gold
+        };
         _equippedPanel.AddChild(equippedTitle);
 
-        _weaponLabel = new UILabel("[Weapon]\nNone", new Vector2(10, 50));
-        _weaponLabel.TextColor = Color.White;
+        _weaponLabel = new UILabel("[Weapon]\nNone", Vector2.Zero)
+        {
+            TextColor = Color.White,
+            Size = new Vector2(_equippedPanelWidth - 30, 60)
+        };
         _equippedPanel.AddChild(_weaponLabel);
 
-        _armorLabel = new UILabel("[Armor]\nNone", new Vector2(10, 150));
-        _armorLabel.TextColor = Color.White;
+        _armorLabel = new UILabel("[Armor]\nNone", Vector2.Zero)
+        {
+            TextColor = Color.White,
+            Size = new Vector2(_equippedPanelWidth - 30, 60)
+        };
         _equippedPanel.AddChild(_armorLabel);
 
-        _accessoryLabel = new UILabel("[Accessory]\nNone", new Vector2(10, 250));
-        _accessoryLabel.TextColor = Color.White;
+        _accessoryLabel = new UILabel("[Accessory]\nNone", Vector2.Zero)
+        {
+            TextColor = Color.White,
+            Size = new Vector2(_equippedPanelWidth - 30, 60)
+        };
         _equippedPanel.AddChild(_accessoryLabel);
 
         _window.ContentPanel.AddChild(_equippedPanel);
+    }
 
-        // Right: Available equipment list (280px)
-        _availableEquipmentList = new UIListBox(new Vector2(480, 10), new Vector2(280, 300))
+    /// <summary>
+    /// Create right panel with available equipment and stats comparison
+    /// </summary>
+    private void CreateRightPanel(float height, float margin)
+    {
+        float xPos = _characterListWidth + _equippedPanelWidth + margin * 3;
+        float panelHeight = height - margin * 2;
+
+        _rightPanel = new UIPanel(
+            new Vector2(xPos, margin),
+            new Vector2(_rightPanelWidth, panelHeight))
+        {
+            Layout = PanelLayout.Vertical,
+            Spacing = 10,
+            DrawBackground = false,
+            DrawBorder = false
+        };
+        _rightPanel.SetPadding(0);
+
+        // Available equipment list (takes most of the space)
+        float listHeight = panelHeight * 0.65f;
+        _availableEquipmentList = new UIListBox(Vector2.Zero, new Vector2(_rightPanelWidth, listHeight))
         {
             ItemHeight = 35
         };
         _availableEquipmentList.OnSelectionChanged += OnEquipmentSelectionChanged;
         _availableEquipmentList.OnItemActivated += OnEquipmentActivated;
-        _window.ContentPanel.AddChild(_availableEquipmentList);
+        _rightPanel.AddChild(_availableEquipmentList);
 
-        // Stats comparison panel (280px)
-        _statsPanel = new UIPanel(new Vector2(480, 320), new Vector2(280, 140))
+        // Stats comparison panel
+        float statsHeight = panelHeight * 0.35f - 10;
+        _statsPanel = new UIPanel(Vector2.Zero, new Vector2(_rightPanelWidth, statsHeight))
         {
             BackgroundColor = new Color(40, 40, 60, 200)
         };
+        _statsPanel.SetPadding(10);
 
-        _statsComparisonLabel = new UILabel("Select equipment to compare", new Vector2(10, 10));
-        _statsComparisonLabel.TextColor = Color.LightGray;
-        _statsComparisonLabel.Size = new Vector2(260, 120);
+        _statsComparisonLabel = new UILabel("Select equipment to compare", Vector2.Zero)
+        {
+            TextColor = Color.LightGray,
+            Size = new Vector2(_rightPanelWidth - 20, statsHeight - 20)
+        };
         _statsPanel.AddChild(_statsComparisonLabel);
 
-        _window.ContentPanel.AddChild(_statsPanel);
+        _rightPanel.AddChild(_statsPanel);
+        _window.ContentPanel.AddChild(_rightPanel);
+    }
 
-        // Instructions
-        var instructionsLabel = new UILabel("Tab: Switch Focus | Enter: Equip/Unequip | Esc: Close", new Vector2(10, 470));
-        instructionsLabel.TextColor = Color.LightGray;
+    /// <summary>
+    /// Create instructions at the bottom
+    /// </summary>
+    private void CreateInstructions(float yPosition, float margin)
+    {
+        var instructionsLabel = new UILabel(
+            "Tab: Switch Focus | Enter: Equip/Unequip | Esc: Close",
+            new Vector2(margin, yPosition))
+        {
+            TextColor = Color.LightGray
+        };
         _window.ContentPanel.AddChild(instructionsLabel);
-
-        // Register window
-        GameServices.UI.AddElement(_window);
-
-        // Give focus to character list
-        _characterList.IsFocused = true;
-
-        // Refresh displays
-        RefreshEquippedDisplay();
-        RefreshAvailableEquipment();
     }
 
     public void Exit()
     {
         GameServices.UI.RemoveElement(_window);
+    }
+
+    public void Pause()
+    {
+        // Hide window when another state is pushed on top
+        if (_window != null)
+            _window.Visible = false;
+    }
+
+    public void Resume()
+    {
+        // Show window when this state becomes active again
+        if (_window != null)
+            _window.Visible = true;
+
+        // Reset keyboard state to prevent immediate re-triggering
+        _previousKeyState = Keyboard.GetState();
     }
 
     public void Update(GameTime gameTime)
@@ -487,7 +602,7 @@ public class EquipmentState : IGameState
             int difference = newBonus.Value - currentBonus;
 
             string statName = newBonus.Key.ToString();
-            string arrow = difference > 0 ? "↑" : difference < 0 ? "↓" : "=";
+            string arrow = difference > 0 ? "+" : difference < 0 ? "-" : "=";
             Color color = difference > 0 ? Color.Green : difference < 0 ? Color.Red : Color.White;
 
             comparison.Add($"{statName}: {newBonus.Value} ({arrow}{System.Math.Abs(difference)})");

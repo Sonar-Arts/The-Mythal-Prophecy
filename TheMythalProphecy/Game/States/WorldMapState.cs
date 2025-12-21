@@ -74,6 +74,21 @@ public class WorldMapState : IGameState
         _hud?.UnsubscribeFromEvents();
     }
 
+    public void Pause()
+    {
+        // Hide HUD when another state is pushed on top (like pause menu)
+        _hud?.Hide();
+    }
+
+    public void Resume()
+    {
+        // Show HUD when this state becomes active again
+        _hud?.Show();
+
+        // Reset keyboard state to prevent immediate re-triggering of menu
+        _previousKeyState = Keyboard.GetState();
+    }
+
     public void Update(GameTime gameTime)
     {
         KeyboardState keyState = Keyboard.GetState();
@@ -94,8 +109,7 @@ public class WorldMapState : IGameState
 
     public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        spriteBatch.Begin();
-
+        // SpriteBatch is already begun by MythalGame
         try
         {
             // Draw background
@@ -156,10 +170,6 @@ public class WorldMapState : IGameState
             Console.WriteLine($"[WorldMapState] ERROR in Draw(): {ex.Message}");
             Console.WriteLine($"[WorldMapState] Stack trace: {ex.StackTrace}");
             // Don't re-throw in Draw to prevent crash loop
-        }
-        finally
-        {
-            spriteBatch.End();
         }
     }
 }

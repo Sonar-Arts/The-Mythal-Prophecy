@@ -86,8 +86,8 @@ public class UISlider : UIElement
         Vector2 mousePos = new Vector2(mouseState.X, mouseState.Y);
 
         // Check if mouse button just pressed
-        bool wasPressed = _previousMouseState.LeftButton.HasFlag(ButtonState.Pressed);
-        bool isPressed = mouseState.LeftButton.HasFlag(ButtonState.Pressed);
+        bool wasPressed = _previousMouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed;
+        bool isPressed = mouseState.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed;
         bool justPressed = isPressed && !wasPressed;
 
         // Start dragging if clicked on slider

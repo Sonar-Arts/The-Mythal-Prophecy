@@ -19,6 +19,16 @@ public interface IGameState
     void Exit();
 
     /// <summary>
+    /// Called when another state is pushed on top of this one
+    /// </summary>
+    void Pause();
+
+    /// <summary>
+    /// Called when the state above is popped and this state becomes active again
+    /// </summary>
+    void Resume();
+
+    /// <summary>
     /// Update the state logic
     /// </summary>
     void Update(GameTime gameTime);

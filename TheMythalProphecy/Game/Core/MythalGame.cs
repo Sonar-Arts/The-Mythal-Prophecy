@@ -72,8 +72,16 @@ public class MythalGame : Microsoft.Xna.Framework.Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        // Draw current state
+        // Begin sprite batch once for all drawing
+        _spriteBatch.Begin();
+
+        // Draw current state (state should NOT call Begin/End)
         _stateManager?.Draw(_spriteBatch, gameTime);
+
+        // Draw UI elements on top
+        GameServices.UI.Draw(_spriteBatch);
+
+        _spriteBatch.End();
 
         base.Draw(gameTime);
     }

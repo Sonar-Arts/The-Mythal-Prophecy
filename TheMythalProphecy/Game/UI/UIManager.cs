@@ -14,6 +14,7 @@ public class UIManager
 {
     private readonly List<UIElement> _rootElements = new();
     private UIElement _focusedElement;
+    private UIElement _activeModal;
     private Texture2D _pixelTexture;
 
     public UITheme Theme { get; private set; }
@@ -80,6 +81,7 @@ public class UIManager
     {
         _rootElements.Clear();
         _focusedElement = null;
+        _activeModal = null;
     }
 
     /// <summary>
@@ -124,11 +126,20 @@ public class UIManager
             element.Update(gameTime);
         }
 
-        // Handle input (from front to back)
-        bool inputHandled = false;
-        for (int i = 0; i < sortedElements.Count && !inputHandled; i++)
+        // Handle input - if modal is active, only route input to the modal
+        if (_activeModal != null && _activeModal.Visible && _activeModal.Enabled)
         {
-            inputHandled = sortedElements[i].HandleInput(mousePosition, mouseClicked);
+            // Modal blocks all input - only the modal receives it
+            _activeModal.HandleInput(mousePosition, mouseClicked);
+        }
+        else
+        {
+            // Normal input routing (from front to back)
+            bool inputHandled = false;
+            for (int i = 0; i < sortedElements.Count && !inputHandled; i++)
+            {
+                inputHandled = sortedElements[i].HandleInput(mousePosition, mouseClicked);
+            }
         }
     }
 
@@ -147,7 +158,7 @@ public class UIManager
     }
 
     /// <summary>
-    /// Show a modal dialog (brings to front and disables other UI)
+    /// Show a modal dialog (brings to front and blocks input to other elements)
     /// </summary>
     public void ShowModal(UIElement modal)
     {
@@ -159,6 +170,9 @@ public class UIManager
 
         AddElement(modal);
         SetFocus(modal);
+
+        // Set as active modal to block input to other elements
+        _activeModal = modal;
     }
 
     /// <summary>
@@ -167,6 +181,12 @@ public class UIManager
     public void CloseModal(UIElement modal)
     {
         RemoveElement(modal);
+
+        // Clear active modal if this was it
+        if (_activeModal == modal)
+        {
+            _activeModal = null;
+        }
     }
 
     /// <summary>

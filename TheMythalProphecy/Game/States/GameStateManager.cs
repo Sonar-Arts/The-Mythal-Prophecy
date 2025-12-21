@@ -27,6 +27,9 @@ public class GameStateManager
     /// </summary>
     public void PushState(IGameState state)
     {
+        // Pause the current state before pushing
+        CurrentState?.Pause();
+
         _stateStack.Push(state);
         state.Enter();
     }
@@ -40,6 +43,9 @@ public class GameStateManager
         {
             var state = _stateStack.Pop();
             state.Exit();
+
+            // Resume the state that's now on top
+            CurrentState?.Resume();
         }
     }
 
