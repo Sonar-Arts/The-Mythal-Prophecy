@@ -4,6 +4,11 @@ using Microsoft.Xna.Framework.Input;
 using TheMythalProphecy.Game.Core;
 using TheMythalProphecy.Game.UI.HUD;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using TheMythalProphecy.Game.Entities;
+using TheMythalProphecy.Game.Data.Mock;
+using TheMythalProphecy.Game.Systems.Rendering;
 
 namespace TheMythalProphecy.Game.States;
 
@@ -17,10 +22,14 @@ public class WorldMapState : IGameState
     private HUDManager _hud;
     private KeyboardState _previousKeyState;
     private SpriteFont _debugFont;
+    private Random _random;
+    private int _stepCounter;
 
     public WorldMapState(GameStateManager stateManager)
     {
         _stateManager = stateManager;
+        _random = new Random();
+        _stepCounter = 0;
     }
 
     public void Enter()
@@ -101,6 +110,23 @@ public class WorldMapState : IGameState
             _stateManager.PushState(new PauseMenuState(_stateManager));
         }
 
+        // Press B key to manually trigger battle for testing
+        if (keyState.IsKeyDown(Keys.B) && !_previousKeyState.IsKeyDown(Keys.B))
+        {
+            TriggerBattle();
+        }
+
+        // Random encounters (10% chance per second)
+        _stepCounter++;
+        if (_stepCounter > 60) // Every 1 second at 60 FPS
+        {
+            _stepCounter = 0;
+            if (_random.Next(0, 100) < 10) // 10% chance
+            {
+                TriggerBattle();
+            }
+        }
+
         // Update HUD
         _hud?.Update(gameTime);
 
@@ -128,7 +154,7 @@ public class WorldMapState : IGameState
             // Draw placeholder world map text
             if (_debugFont != null)
             {
-                string mapText = "WORLD MAP - Press Escape/Enter for Menu";
+                string mapText = "WORLD MAP - Press Escape/Enter for Menu | Press B for Battle";
                 var textSize = _debugFont.MeasureString(mapText);
                 var textPosition = new Vector2(
                     (GameServices.GraphicsDevice.Viewport.Width - textSize.X) / 2,
@@ -170,6 +196,46 @@ public class WorldMapState : IGameState
             Console.WriteLine($"[WorldMapState] ERROR in Draw(): {ex.Message}");
             Console.WriteLine($"[WorldMapState] Stack trace: {ex.StackTrace}");
             // Don't re-throw in Draw to prevent crash loop
+        }
+    }
+
+    private void TriggerBattle()
+    {
+        Console.WriteLine("[WorldMapState] Triggering battle...");
+
+        try
+        {
+            // Create 1-3 random enemies
+            var enemyDefs = MockEnemyData.CreateEnemies();
+            var enemies = new List<Entity>();
+            int enemyCount = _random.Next(1, 4); // 1 to 3 enemies
+
+            for (int i = 0; i < enemyCount; i++)
+            {
+                var def = enemyDefs[_random.Next(0, enemyDefs.Count)];
+                var enemy = MockEnemyFactory.CreateEnemy(def);
+                enemies.Add(enemy);
+                Console.WriteLine($"[WorldMapState] Created enemy: {def.Name}");
+            }
+
+            // Random background theme
+            var themes = new[] {
+                BattleBackgroundManager.BattlegroundTheme.Ruins,
+                BattleBackgroundManager.BattlegroundTheme.Castle,
+                BattleBackgroundManager.BattlegroundTheme.Jungle,
+                BattleBackgroundManager.BattlegroundTheme.Graveyard
+            };
+            var theme = themes[_random.Next(0, themes.Length)];
+
+            Console.WriteLine($"[WorldMapState] Battle theme: {theme}");
+
+            // Transition to battle
+            _stateManager.PushState(new BattleState(_stateManager, enemies, theme));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WorldMapState] ERROR in TriggerBattle(): {ex.Message}");
+            Console.WriteLine($"[WorldMapState] Stack trace: {ex.StackTrace}");
         }
     }
 }

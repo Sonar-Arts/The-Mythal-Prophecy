@@ -118,11 +118,13 @@ public class ItemUsedEvent : GameEvent
 {
     public string ItemId { get; }
     public object Target { get; }
+    public int Quantity { get; }
 
-    public ItemUsedEvent(string itemId, object target) : base(EventType.ItemUsed)
+    public ItemUsedEvent(string itemId, object target, int quantity = 1) : base(EventType.ItemUsed)
     {
         ItemId = itemId;
         Target = target;
+        Quantity = quantity;
     }
 }
 
@@ -156,5 +158,40 @@ public class QuestUpdatedEvent : GameEvent
     {
         QuestId = questId;
         ObjectiveId = objectiveId;
+    }
+}
+
+// Additional Combat Events for Battle System
+public class CombatEndedEvent : GameEvent
+{
+    public bool Victory { get; }
+    public object Result { get; }
+
+    public CombatEndedEvent(bool victory, object result) : base(EventType.CombatEnded)
+    {
+        Victory = victory;
+        Result = result;
+    }
+}
+
+public class TurnStartedEvent : GameEvent
+{
+    public object Combatant { get; }
+    public int TurnNumber { get; }
+
+    public TurnStartedEvent(object combatant, int turnNumber) : base(EventType.TurnStarted)
+    {
+        Combatant = combatant;
+        TurnNumber = turnNumber;
+    }
+}
+
+public class ActionExecutedEvent : GameEvent
+{
+    public object Action { get; }
+
+    public ActionExecutedEvent(object action) : base(EventType.ActionExecuted)
+    {
+        Action = action;
     }
 }

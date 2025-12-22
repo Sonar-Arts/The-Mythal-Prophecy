@@ -1,5 +1,6 @@
 using TheMythalProphecy.Game.Characters.Stats;
 using TheMythalProphecy.Game.Core;
+using TheMythalProphecy.Game.Systems.Animation;
 
 namespace TheMythalProphecy.Game.Data.Mock;
 
@@ -23,7 +24,10 @@ public static class MockDataInitializer
         // Step 1: Populate definition databases
         InitializeDefinitionDatabases();
 
-        // Step 2: Populate game data (party, inventory, progress)
+        // Step 2: Initialize animation library
+        AnimationLibrary.Initialize(GameServices.Animations);
+
+        // Step 3: Populate game data (party, inventory, progress)
         InitializeGameData();
     }
 
