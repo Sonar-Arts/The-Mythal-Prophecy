@@ -3,8 +3,9 @@ using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Input;
 using TheMythalProphecy.Game.Core;
-using TheMythalProphecy.Game.UI.Components;
+using TheMythalProphecy.Game.UI.Gleam;
 
 namespace TheMythalProphecy.Game.States;
 
@@ -23,11 +24,16 @@ public class TitleScreenState : IGameState
     private Effect _logoShimmerEffect;
     private SpriteFont _menuFont;
     private float _elapsedTime;
-    private UIPanel _menuPanel;
-    private DiamondButton _newGameButton;
-    private DiamondButton _continueButton;
-    private DiamondButton _optionsButton;
-    private DiamondButton _exitButton;
+
+    // GleamUI
+    private GleamTheme _theme;
+    private GleamRenderer _renderer;
+    private GleamPanel _menuPanel;
+    private GleamButton _newGameButton;
+    private GleamButton _continueButton;
+    private GleamButton _optionsButton;
+    private GleamButton _exitButton;
+    private MouseState _previousMouseState;
 
     public TitleScreenState(ContentManager content, GameStateManager stateManager)
     {
@@ -54,6 +60,13 @@ public class TitleScreenState : IGameState
         // Load fancy menu font
         _menuFont = _content.Load<SpriteFont>("Fonts/MenuTitle");
 
+        // Initialize GleamUI
+        var defaultFont = _content.Load<SpriteFont>("Fonts/Default");
+        _theme = new GleamTheme();
+        _theme.Initialize(defaultFont, _menuFont);
+        _renderer = new GleamRenderer();
+        _renderer.Initialize(GameServices.GraphicsDevice, _content, _theme);
+
         CreateMenuUI();
     }
 
@@ -74,84 +87,62 @@ public class TitleScreenState : IGameState
         var menuY = (screenHeight - totalMenuHeight) / 2f;
 
         // Create menu panel with vertical layout
-        _menuPanel = new UIPanel(
+        _menuPanel = new GleamPanel(
             new Vector2(menuX, menuY),
-            new Vector2(buttonWidth, totalMenuHeight)
-        )
+            new Vector2(buttonWidth, totalMenuHeight))
         {
-            Layout = PanelLayout.Vertical,
+            Layout = GleamLayout.Vertical,
             Spacing = buttonSpacing,
+            Padding = 0,
             DrawBackground = false,
             DrawBorder = false
         };
-        _menuPanel.SetPadding(0);
 
-        // Create parallelogram menu buttons with mystical styling
-        _newGameButton = new DiamondButton("New Game", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
-        _newGameButton.OnClick += OnNewGameClicked;
-        ApplyMysticalStyle(_newGameButton);
+        // Create parallelogram menu buttons (GleamButton uses theme colors by default)
+        _newGameButton = new GleamButton("New Game", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        _newGameButton.OnClick += _ => OnNewGameClicked();
 
-        _continueButton = new DiamondButton("Continue", Vector2.Zero, new Vector2(buttonWidth, buttonHeight))
+        _continueButton = new GleamButton("Continue", Vector2.Zero, new Vector2(buttonWidth, buttonHeight))
         {
             Enabled = false // Disabled until save system exists
         };
-        _continueButton.OnClick += OnContinueClicked;
-        ApplyMysticalStyle(_continueButton);
+        _continueButton.OnClick += _ => OnContinueClicked();
 
-        _optionsButton = new DiamondButton("Options", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
-        _optionsButton.OnClick += OnOptionsClicked;
-        ApplyMysticalStyle(_optionsButton);
+        _optionsButton = new GleamButton("Options", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        _optionsButton.OnClick += _ => OnOptionsClicked();
 
-        _exitButton = new DiamondButton("Exit", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
-        _exitButton.OnClick += OnExitClicked;
-        ApplyMysticalStyle(_exitButton);
+        _exitButton = new GleamButton("Exit", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        _exitButton.OnClick += _ => OnExitClicked();
 
         // Add buttons to panel
         _menuPanel.AddChild(_newGameButton);
         _menuPanel.AddChild(_continueButton);
         _menuPanel.AddChild(_optionsButton);
         _menuPanel.AddChild(_exitButton);
-
-        // Register with UI manager
-        GameServices.UI.AddElement(_menuPanel);
     }
 
-    private void OnNewGameClicked(UIButton button)
+    private void OnNewGameClicked()
     {
         _stateManager.ChangeState(new WorldMapState(_stateManager));
     }
 
-    private void OnContinueClicked(UIButton button)
+    private void OnContinueClicked()
     {
         // TODO: Load saved game when save system is implemented
     }
 
-    private void OnOptionsClicked(UIButton button)
+    private void OnOptionsClicked()
     {
         _stateManager.PushState(new GleamOptionsMenuState(_content, _stateManager));
     }
 
-    private void OnExitClicked(UIButton button)
+    private void OnExitClicked()
     {
         Environment.Exit(0);
     }
 
-    private void ApplyMysticalStyle(UIButton button)
-    {
-        button.NormalColor = new Color(15, 4, 31);      // Deep purple
-        button.HoverColor = new Color(31, 8, 56);       // Mid purple
-        button.PressedColor = new Color(8, 3, 15);      // Nearly black purple
-        button.DisabledColor = new Color(20, 10, 30);   // Muted purple
-        button.BorderColor = new Color(179, 128, 51);   // Gold border
-        button.BorderThickness = 2;
-        button.Font = _menuFont;                        // Fancy menu font
-    }
-
     public void Exit()
     {
-        // Unregister UI elements
-        GameServices.UI.RemoveElement(_menuPanel);
-
         _logoTexture?.Dispose();
         _pixelTexture?.Dispose();
     }
@@ -169,8 +160,7 @@ public class TitleScreenState : IGameState
         if (_menuPanel != null)
             _menuPanel.Visible = true;
 
-        // Note: TitleScreenState doesn't use keyboard input directly,
-        // but keeping pattern consistent for future changes
+        _previousMouseState = Mouse.GetState();
     }
 
     public void Update(GameTime gameTime)
@@ -178,7 +168,15 @@ public class TitleScreenState : IGameState
         // Track elapsed time for shader animation
         _elapsedTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        // UI input is handled by UIManager
+        // Handle mouse input for GleamUI
+        var mouseState = Mouse.GetState();
+        Vector2 mousePos = new Vector2(mouseState.X, mouseState.Y);
+        bool mouseDown = mouseState.LeftButton == ButtonState.Pressed;
+        bool mouseClicked = mouseDown && _previousMouseState.LeftButton == ButtonState.Released;
+        _previousMouseState = mouseState;
+
+        _menuPanel.Update(gameTime, _renderer);
+        _menuPanel.HandleInput(mousePos, mouseDown, mouseClicked);
     }
 
     public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
@@ -261,9 +259,12 @@ public class TitleScreenState : IGameState
         spriteBatch.Draw(_logoTexture, logoPosition, null, Color.White, 0f, Vector2.Zero, logoScale, SpriteEffects.None, 0f);
         spriteBatch.End();
 
-        // Resume normal batch for UI
-        spriteBatch.Begin();
+        // === Layer 4: GleamUI Menu ===
+        spriteBatch.Begin(blendState: BlendState.AlphaBlend);
+        _menuPanel.Draw(spriteBatch, _renderer);
+        spriteBatch.End();
 
-        // UI elements are drawn by UIManager in MythalGame.Draw()
+        // Resume normal batch for MythalGame
+        spriteBatch.Begin();
     }
 }
