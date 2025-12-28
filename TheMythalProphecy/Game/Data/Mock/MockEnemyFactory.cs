@@ -3,6 +3,7 @@ using TheMythalProphecy.Game.Characters.Stats;
 using TheMythalProphecy.Game.Data.Definitions;
 using TheMythalProphecy.Game.Entities;
 using TheMythalProphecy.Game.Entities.Components;
+using TheMythalProphecy.Game.Systems.Animation;
 
 namespace TheMythalProphecy.Game.Data.Mock
 {
@@ -26,8 +27,16 @@ namespace TheMythalProphecy.Game.Data.Mock
             ApplyEnemyStats(stats, def);
             entity.AddComponent(stats);
 
-            // Add sprite component (placeholder for now)
-            // entity.AddComponent(new SpriteComponent());
+            // Add animation component with battle animations
+            var animComponent = new AnimationComponent();
+            entity.AddComponent(animComponent);
+
+            // Add sprite component for rendering (texture will be set from animation)
+            var spriteComponent = new SpriteComponent();
+            entity.AddComponent(spriteComponent);
+
+            // Initialize animations (reuse character factory method)
+            MockCharacterFactory.InitializeBattleAnimations(animComponent);
 
             // Store the rewards data in the entity (for later access)
             // We'll store it as a simple tag/property if needed

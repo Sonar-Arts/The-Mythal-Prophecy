@@ -30,6 +30,7 @@ namespace TheMythalProphecy.Game.States
         private readonly List<Entity> _enemies;
         private readonly BattleBackgroundManager.BattlegroundTheme _theme;
         private bool _battleComplete = false;
+        private bool _debugPrinted = false;
 
         public BattleState(GameStateManager stateManager, List<Entity> enemies, BattleBackgroundManager.BattlegroundTheme theme)
         {
@@ -67,6 +68,19 @@ namespace TheMythalProphecy.Game.States
             _previousKeyState = Keyboard.GetState();
 
             Console.WriteLine($"Battle started! {_battleContext.PlayerCombatants.Count} heroes vs {_battleContext.EnemyCombatants.Count} enemies");
+
+            // Debug: List all combatants
+            Console.WriteLine("=== Player Combatants ===");
+            foreach (var combatant in _battleContext.PlayerCombatants)
+            {
+                Console.WriteLine($"  {combatant.Name} at position {combatant.BattlePosition} (Entity ID: {combatant.Entity.Id})");
+            }
+
+            Console.WriteLine("=== Enemy Combatants ===");
+            foreach (var combatant in _battleContext.EnemyCombatants)
+            {
+                Console.WriteLine($"  {combatant.Name} at position {combatant.BattlePosition} (Entity ID: {combatant.Entity.Id})");
+            }
         }
 
         public void Exit()
@@ -94,6 +108,9 @@ namespace TheMythalProphecy.Game.States
 
             // Update battle manager
             _battleManager.Update(gameTime);
+
+            // Update combatant positions and animations
+            UpdateCombatantComponents(gameTime);
 
             // Handle input based on current phase
             var currentPhase = _battleManager.CurrentPhase;
@@ -197,27 +214,76 @@ namespace TheMythalProphecy.Game.States
 
         private void DrawCombatants(SpriteBatch spriteBatch)
         {
-            var pixelTexture = GameServices.UI.PixelTexture;
-
-            // Draw party members (blue rectangles on left)
+            // Draw party members (left side) - only alive combatants
             foreach (var combatant in _battleContext.PlayerCombatants)
             {
-                if (combatant.IsAlive)
+                // Only draw if alive
+                if (!combatant.IsAlive)
+                    continue;
+
+                DrawCombatantSprite(spriteBatch, combatant, flipHorizontal: false);
+            }
+
+            // Draw enemies (right side) - flip them to face left, only alive
+            foreach (var combatant in _battleContext.EnemyCombatants)
+            {
+                // Only draw if alive
+                if (!combatant.IsAlive)
+                    continue;
+
+                DrawCombatantSprite(spriteBatch, combatant, flipHorizontal: true);
+            }
+        }
+
+        /// <summary>
+        /// Draw a single combatant sprite with animation
+        /// </summary>
+        private void DrawCombatantSprite(SpriteBatch spriteBatch, Combatant combatant, bool flipHorizontal)
+        {
+            var sprite = combatant.Entity.GetComponent<SpriteComponent>();
+            var transform = combatant.Entity.GetComponent<TransformComponent>();
+            var animation = combatant.Animation;
+
+            if (sprite == null || transform == null || sprite.Texture == null)
+            {
+                // Fallback to rectangle if sprite not available
+                var rect = new Rectangle((int)combatant.BattlePosition.X, (int)combatant.BattlePosition.Y, 50, 50);
+                spriteBatch.Draw(GameServices.UI.PixelTexture, rect,
+                    combatant.IsPlayer ? Color.Blue : Color.Red);
+                return;
+            }
+
+            // Debug: Log sprite info for first combatant only (once)
+            if (!_debugPrinted && combatant == _battleContext.PlayerCombatants[0])
+            {
+                _debugPrinted = true;
+                Console.WriteLine($"[Sprite Debug] {combatant.Name}:");
+                Console.WriteLine($"  Texture: {sprite.Texture.Width}x{sprite.Texture.Height}");
+                Console.WriteLine($"  SourceRect: {sprite.SourceRectangle}");
+                Console.WriteLine($"  Origin: {sprite.Origin}");
+                Console.WriteLine($"  Position: {transform.Position}");
+                Console.WriteLine($"  Scale: 2.0");
+
+                // Also check the animation state
+                if (animation != null)
                 {
-                    var rect = new Rectangle((int)combatant.BattlePosition.X, (int)combatant.BattlePosition.Y, 50, 50);
-                    spriteBatch.Draw(pixelTexture, rect, Color.Blue);
+                    Console.WriteLine($"  Animation State: {animation.CurrentState}");
+                    Console.WriteLine($"  Animation Playing: {animation.CurrentAnimation?.IsPlaying ?? false}");
                 }
             }
 
-            // Draw enemies (red rectangles on right)
-            foreach (var combatant in _battleContext.EnemyCombatants)
-            {
-                if (combatant.IsAlive)
-                {
-                    var rect = new Rectangle((int)combatant.BattlePosition.X, (int)combatant.BattlePosition.Y, 50, 50);
-                    spriteBatch.Draw(pixelTexture, rect, Color.Red);
-                }
-            }
+            // Draw the sprite
+            spriteBatch.Draw(
+                sprite.Texture,
+                transform.Position,
+                sprite.SourceRectangle,
+                combatant.IsDead ? Color.Gray : Color.White, // Gray tint when dead
+                transform.Rotation,
+                sprite.Origin,
+                2.0f, // Scale up to make sprites visible (128px frames)
+                flipHorizontal ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
+                sprite.LayerDepth
+            );
         }
 
         private void DrawBattleText(SpriteBatch spriteBatch)
@@ -306,6 +372,51 @@ namespace TheMythalProphecy.Game.States
 
             // Return to title screen
             _stateManager.ChangeState(new TitleScreenState(GameServices.Content, _stateManager));
+        }
+
+        /// <summary>
+        /// Update combatant entity components for rendering
+        /// </summary>
+        private void UpdateCombatantComponents(GameTime gameTime)
+        {
+            // Only update alive combatants
+            foreach (var combatant in _battleContext.AllCombatants)
+            {
+                // Skip dead combatants - don't update their animations or positions
+                if (!combatant.IsAlive)
+                    continue;
+
+                // Sync TransformComponent position with BattlePosition
+                var transform = combatant.Entity.GetComponent<TransformComponent>();
+                if (transform != null)
+                {
+                    transform.Position = combatant.BattlePosition;
+                }
+
+                // Update animation component
+                var animation = combatant.Animation;
+                if (animation != null)
+                {
+                    animation.Update(gameTime);
+                }
+
+                // Sync sprite component with current animation frame
+                var sprite = combatant.Entity.GetComponent<SpriteComponent>();
+                if (sprite != null && animation != null)
+                {
+                    sprite.SourceRectangle = animation.GetCurrentFrameRectangle();
+                    sprite.Texture = animation.GetCurrentTexture();
+
+                    // Update origin to center of current frame
+                    if (!sprite.SourceRectangle.IsEmpty)
+                    {
+                        sprite.Origin = new Vector2(
+                            sprite.SourceRectangle.Width / 2f,
+                            sprite.SourceRectangle.Height / 2f
+                        );
+                    }
+                }
+            }
         }
 
         // Event Handlers

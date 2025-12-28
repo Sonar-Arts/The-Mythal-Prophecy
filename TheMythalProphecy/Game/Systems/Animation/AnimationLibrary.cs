@@ -69,50 +69,101 @@ namespace TheMythalProphecy.Game.Systems.Animation
         /// </summary>
         private static void RegisterExampleAnimations(AnimationManager animationManager)
         {
-            // Combat animations
-            RegisterAnimation(animationManager, AnimationCategory.Combat,
-                "character_attack", "Combat", "Attack.png",
-                frameCount: 8, frameDuration: 0.08f, loop: false);
+            // Combat animations - using explicit 128x128 frame dimensions
+            RegisterAnimationWithDimensions(animationManager, AnimationCategory.Combat,
+                "character_attack", "Combat", "Power_Strike.png",
+                frameWidth: 128, frameHeight: 128, frameCount: 11, frameDuration: 0.08f, loop: false);
 
-            RegisterAnimation(animationManager, AnimationCategory.Combat,
+            RegisterAnimationWithDimensions(animationManager, AnimationCategory.Combat,
                 "character_cast", "Combat", "Casting Spell.png",
-                frameCount: 10, frameDuration: 0.1f, loop: false);
+                frameWidth: 128, frameHeight: 128, frameCount: 10, frameDuration: 0.1f, loop: false);
 
-            RegisterAnimation(animationManager, AnimationCategory.Combat,
+            RegisterAnimationWithDimensions(animationManager, AnimationCategory.Combat,
                 "character_hurt", "Combat", "Taking_Damage.png",
-                frameCount: 4, frameDuration: 0.08f, loop: false);
+                frameWidth: 128, frameHeight: 128, frameCount: 3, frameDuration: 0.08f, loop: false);
 
-            RegisterAnimation(animationManager, AnimationCategory.Combat,
+            RegisterAnimationWithDimensions(animationManager, AnimationCategory.Combat,
                 "character_death", "Combat", "Death.png",
-                frameCount: 12, frameDuration: 0.1f, loop: false);
+                frameWidth: 128, frameHeight: 128, frameCount: 5, frameDuration: 0.1f, loop: false);
 
-            RegisterAnimation(animationManager, AnimationCategory.Combat,
+            RegisterAnimationWithDimensions(animationManager, AnimationCategory.Combat,
                 "character_dodge", "Combat", "Dodge.png",
-                frameCount: 6, frameDuration: 0.06f, loop: false);
+                frameWidth: 128, frameHeight: 128, frameCount: 7, frameDuration: 0.06f, loop: false);
 
-            RegisterAnimation(animationManager, AnimationCategory.Combat,
+            RegisterAnimationWithDimensions(animationManager, AnimationCategory.Combat,
                 "character_use_item", "Combat", "Drinking_Potion.png",
-                frameCount: 8, frameDuration: 0.1f, loop: false);
+                frameWidth: 128, frameHeight: 128, frameCount: 8, frameDuration: 0.1f, loop: false);
 
-            RegisterAnimation(animationManager, AnimationCategory.Combat,
+            RegisterAnimationWithDimensions(animationManager, AnimationCategory.Combat,
                 "character_defend", "Combat", "Defensive_Stance.png",
-                frameCount: 5, frameDuration: 0.1f, loop: false);
+                frameWidth: 128, frameHeight: 128, frameCount: 1, frameDuration: 0.1f, loop: false);
 
-            // Movement animations
-            RegisterAnimation(animationManager, AnimationCategory.Movement,
+            // Movement animations - using explicit 128x128 frame dimensions
+            RegisterAnimationWithDimensions(animationManager, AnimationCategory.Movement,
                 "character_walk", "Movement", "Walking.png",
-                frameCount: 6, frameDuration: 0.12f, loop: true);
+                frameWidth: 128, frameHeight: 128, frameCount: 12, frameDuration: 0.12f, loop: true);
 
-            RegisterAnimation(animationManager, AnimationCategory.Movement,
+            RegisterAnimationWithDimensions(animationManager, AnimationCategory.Movement,
                 "character_run", "Movement", "Running.png",
-                frameCount: 8, frameDuration: 0.08f, loop: true);
+                frameWidth: 128, frameHeight: 128, frameCount: 12, frameDuration: 0.08f, loop: true);
 
             // Idle animation (reusing walking frames with slower timing)
-            RegisterAnimation(animationManager, AnimationCategory.Movement,
+            // Note: Walking.png has 12 frames, but we only use the first 4
+            RegisterAnimationWithDimensions(animationManager, AnimationCategory.Movement,
                 "character_idle", "Movement", "Walking.png",
-                frameCount: 4, frameDuration: 0.2f, loop: true);
+                frameWidth: 128, frameHeight: 128, frameCount: 4, frameDuration: 0.2f, loop: true);
 
             Console.WriteLine($"[AnimationLibrary] Registered 10 example animations");
+        }
+
+        /// <summary>
+        /// Registers an animation with explicit frame dimensions
+        /// </summary>
+        private static void RegisterAnimationWithDimensions(
+            AnimationManager animationManager,
+            AnimationCategory category,
+            string name,
+            string subfolder,
+            string filename,
+            int frameWidth,
+            int frameHeight,
+            int frameCount,
+            float frameDuration,
+            bool loop)
+        {
+            try
+            {
+                // Build file path
+                var path = Path.Combine("Game", "Art", "Characters", "Animations", subfolder, filename);
+
+                // Load texture using FromStream pattern
+                var texture = LoadTexture(path);
+
+                // Create animation definition using grid layout with explicit dimensions
+                var definition = AnimationDefinition.CreateGrid(
+                    name,
+                    texture,
+                    frameWidth,
+                    frameHeight,
+                    frameCount,
+                    frameDuration,
+                    loop
+                );
+
+                // Register with animation manager
+                animationManager.RegisterAnimation(definition);
+
+                // Track the animation
+                if (!_animationsByCategory.ContainsKey(category))
+                    _animationsByCategory[category] = new List<string>();
+                _animationsByCategory[category].Add(name);
+
+                Console.WriteLine($"[AnimationLibrary] Registered: {name} ({frameCount} frames, {frameDuration}s/frame, loop={loop})");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AnimationLibrary] ERROR registering {name}: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -189,12 +240,12 @@ namespace TheMythalProphecy.Game.Systems.Animation
         }
 
         /// <summary>
-        /// Creates a 1x1 magenta texture for debugging missing textures
+        /// Creates a 128x128 magenta texture for debugging missing textures
         /// </summary>
         private static Texture2D CreateFallbackTexture()
         {
-            var texture = new Texture2D(GameServices.GraphicsDevice, 192, 192);
-            var data = new Microsoft.Xna.Framework.Color[192 * 192];
+            var texture = new Texture2D(GameServices.GraphicsDevice, 128, 128);
+            var data = new Microsoft.Xna.Framework.Color[128 * 128];
             for (int i = 0; i < data.Length; i++)
                 data[i] = Microsoft.Xna.Framework.Color.Magenta;
             texture.SetData(data);

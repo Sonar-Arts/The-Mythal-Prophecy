@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using TheMythalProphecy.Game.Characters.Stats;
 using TheMythalProphecy.Game.Core;
@@ -5,6 +6,7 @@ using TheMythalProphecy.Game.Data.Definitions;
 using TheMythalProphecy.Game.Data.Definitions.Databases;
 using TheMythalProphecy.Game.Entities;
 using TheMythalProphecy.Game.Entities.Components;
+using TheMythalProphecy.Game.Systems.Animation;
 
 namespace TheMythalProphecy.Game.Data.Mock;
 
@@ -27,6 +29,17 @@ public static class MockCharacterFactory
         var stats = new StatsComponent();
         ApplyBaseStats(stats, def, level);
         entity.AddComponent(stats);
+
+        // Add animation component with battle animations
+        var animComponent = new AnimationComponent();
+        entity.AddComponent(animComponent);
+
+        // Add sprite component for rendering (texture will be set from animation)
+        var spriteComponent = new SpriteComponent();
+        entity.AddComponent(spriteComponent);
+
+        // Initialize animations from AnimationLibrary
+        InitializeBattleAnimations(animComponent);
 
         // Apply starting equipment if any
         ApplyStartingEquipment(stats, def);
@@ -153,5 +166,42 @@ public static class MockCharacterFactory
 
             stats.AddStatusEffect(effect);
         }
+    }
+
+    /// <summary>
+    /// Initialize combat animations for a character entity
+    /// </summary>
+    public static void InitializeBattleAnimations(AnimationComponent animComponent)
+    {
+        var animManager = GameServices.Animations;
+
+        // Map AnimationStates to AnimationLibrary definitions
+        var animationMappings = new Dictionary<AnimationState, string>
+        {
+            { AnimationState.Idle, "character_idle" },
+            { AnimationState.Walk, "character_walk" },
+            { AnimationState.Run, "character_run" },
+            { AnimationState.Attack, "character_attack" },
+            { AnimationState.Casting, "character_cast" },
+            { AnimationState.Hurt, "character_hurt" },
+            { AnimationState.Death, "character_death" },
+            { AnimationState.Defend, "character_defend" },
+            { AnimationState.Dodge, "character_dodge" },
+            { AnimationState.Heal, "character_use_item" }
+        };
+
+        foreach (var mapping in animationMappings)
+        {
+            var definition = animManager.GetDefinition(mapping.Value);
+            if (definition != null)
+            {
+                var animation = new Animation(definition);
+                animComponent.AddAnimation(mapping.Key, animation);
+            }
+        }
+
+        // Start with Idle animation
+        animComponent.CurrentState = AnimationState.Idle;
+        animComponent.Initialize();
     }
 }

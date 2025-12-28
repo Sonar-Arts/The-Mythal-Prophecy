@@ -22,6 +22,7 @@ namespace TheMythalProphecy.Game.Systems.Animation
         public bool IsPaused => _isPaused;
         public bool IsComplete => !_definition.Loop && _currentFrame >= _definition.FrameCount - 1;
         public int LoopCount => _loopCount;
+        public Texture2D Texture => _definition.SpriteSheet;
 
         /// <summary>
         /// Event fired when animation completes (for non-looping animations)

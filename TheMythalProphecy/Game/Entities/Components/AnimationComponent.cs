@@ -180,13 +180,7 @@ namespace TheMythalProphecy.Game.Entities.Components
         /// </summary>
         public Texture2D GetCurrentTexture()
         {
-            if (_currentAnimation == null)
-                return null;
-
-            // Access the definition's sprite sheet
-            // We'll need to expose this through the Animation class
-            // For now, return null - we'll fix this when we update Animation.cs
-            return null;
+            return _currentAnimation?.Texture;
         }
 
         /// <summary>

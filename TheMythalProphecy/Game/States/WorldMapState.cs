@@ -116,6 +116,7 @@ public class WorldMapState : IGameState
             TriggerBattle();
         }
 
+        /* DISABLED: Random encounters
         // Random encounters (10% chance per second)
         _stepCounter++;
         if (_stepCounter > 60) // Every 1 second at 60 FPS
@@ -126,6 +127,7 @@ public class WorldMapState : IGameState
                 TriggerBattle();
             }
         }
+        */
 
         // Update HUD
         _hud?.Update(gameTime);
@@ -154,7 +156,7 @@ public class WorldMapState : IGameState
             // Draw placeholder world map text
             if (_debugFont != null)
             {
-                string mapText = "WORLD MAP - Press Escape/Enter for Menu | Press B for Battle";
+                string mapText = "WORLD MAP - Press Escape/Enter for Menu | Press B for Battle (Manual Only)";
                 var textSize = _debugFont.MeasureString(mapText);
                 var textPosition = new Vector2(
                     (GameServices.GraphicsDevice.Viewport.Width - textSize.X) / 2,

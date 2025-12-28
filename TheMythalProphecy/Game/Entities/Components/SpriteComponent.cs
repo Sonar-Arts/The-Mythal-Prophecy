@@ -21,6 +21,16 @@ public class SpriteComponent : IComponent
 
     private TransformComponent _transform;
 
+    /// <summary>
+    /// Parameterless constructor for deferred texture initialization
+    /// </summary>
+    public SpriteComponent()
+    {
+        Texture = null;
+        SourceRectangle = Rectangle.Empty;
+        Origin = Vector2.Zero;
+    }
+
     public SpriteComponent(Texture2D texture)
     {
         Texture = texture;
