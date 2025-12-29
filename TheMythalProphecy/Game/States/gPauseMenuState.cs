@@ -158,7 +158,7 @@ public class gPauseMenuState : IGameState
 
     private void OnStatusClicked()
     {
-        _stateManager.PushState(new CharacterStatusState(_stateManager));
+        _stateManager.PushState(new gCharacterStatusState(_content, _stateManager));
     }
 
     private void OnPartyClicked()
