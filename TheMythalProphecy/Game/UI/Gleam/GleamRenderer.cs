@@ -44,24 +44,27 @@ public class GleamRenderer
 
     /// <summary>
     /// Draws a parallelogram (slanted rectangle) using horizontal scan lines.
+    /// The parallelogram is centered within the bounds.
     /// </summary>
     public void DrawParallelogram(SpriteBatch spriteBatch, Rectangle bounds, Color color, float skewFactor, float alpha = 1f)
     {
         if (_pixelTexture == null) return;
 
         float skewOffset = bounds.Height * skewFactor;
+        float centerOffset = skewOffset / 2f;
 
-        // Calculate parallelogram corners
-        var topLeft = new Vector2(bounds.X + skewOffset, bounds.Y);
-        var topRight = new Vector2(bounds.Right + skewOffset, bounds.Y);
-        var bottomLeft = new Vector2(bounds.X, bounds.Bottom);
+        // Calculate parallelogram corners (centered within bounds)
+        var topLeft = new Vector2(bounds.X + skewOffset - centerOffset, bounds.Y);
+        var topRight = new Vector2(bounds.Right + skewOffset - centerOffset, bounds.Y);
+        var bottomLeft = new Vector2(bounds.X - centerOffset, bounds.Bottom);
+        var bottomRight = new Vector2(bounds.Right - centerOffset, bounds.Bottom);
 
         // Draw as horizontal scan lines for filled shape
         for (int y = 0; y < bounds.Height; y++)
         {
             float t = y / (float)bounds.Height;
             float leftX = MathHelper.Lerp(topLeft.X, bottomLeft.X, t);
-            float rightX = MathHelper.Lerp(topRight.X, bottomLeft.X + bounds.Width, t);
+            float rightX = MathHelper.Lerp(topRight.X, bottomRight.X, t);
             int posY = bounds.Y + y;
 
             spriteBatch.Draw(
@@ -74,17 +77,19 @@ public class GleamRenderer
 
     /// <summary>
     /// Draws a parallelogram border (outline only).
+    /// The parallelogram is centered within the bounds.
     /// </summary>
     public void DrawParallelogramBorder(SpriteBatch spriteBatch, Rectangle bounds, Color color, float skewFactor, int thickness, float alpha = 1f)
     {
         if (_pixelTexture == null) return;
 
         float skewOffset = bounds.Height * skewFactor;
+        float centerOffset = skewOffset / 2f;
 
-        var topLeft = new Vector2(bounds.X + skewOffset, bounds.Y);
-        var topRight = new Vector2(bounds.Right + skewOffset, bounds.Y);
-        var bottomRight = new Vector2(bounds.Right, bounds.Bottom);
-        var bottomLeft = new Vector2(bounds.X, bounds.Bottom);
+        var topLeft = new Vector2(bounds.X + skewOffset - centerOffset, bounds.Y);
+        var topRight = new Vector2(bounds.Right + skewOffset - centerOffset, bounds.Y);
+        var bottomRight = new Vector2(bounds.Right - centerOffset, bounds.Bottom);
+        var bottomLeft = new Vector2(bounds.X - centerOffset, bounds.Bottom);
 
         DrawLine(spriteBatch, topLeft, topRight, thickness, color * alpha);
         DrawLine(spriteBatch, topRight, bottomRight, thickness, color * alpha);
@@ -255,18 +260,21 @@ public class GleamRenderer
     }
 
     /// <summary>
-    /// Checks if a point is inside a parallelogram.
+    /// Checks if a point is inside a parallelogram (centered within bounds).
     /// </summary>
     public bool IsPointInParallelogram(Vector2 point, Rectangle bounds, float skewFactor)
     {
         float skewOffset = bounds.Height * skewFactor;
+        float centerOffset = skewOffset / 2f;
         float relY = point.Y - bounds.Y;
         float t = relY / bounds.Height;
 
         if (t < 0 || t > 1) return false;
 
-        float leftX = bounds.X + skewOffset * (1 - t);
-        float rightX = bounds.Right + skewOffset * (1 - t);
+        // At t=0 (top): left edge at bounds.X + skewOffset/2, right edge at bounds.Right + skewOffset/2
+        // At t=1 (bottom): left edge at bounds.X - skewOffset/2, right edge at bounds.Right - skewOffset/2
+        float leftX = bounds.X + skewOffset * (1 - t) - centerOffset;
+        float rightX = bounds.Right + skewOffset * (1 - t) - centerOffset;
 
         return point.X >= leftX && point.X <= rightX &&
                point.Y >= bounds.Y && point.Y <= bounds.Bottom;

@@ -19,6 +19,7 @@ public class GleamPanel : GleamElement
     public GleamLayout Layout { get; set; } = GleamLayout.None;
     public int Spacing { get; set; } = 8;
     public int Padding { get; set; } = 8;
+    public bool CenterChildren { get; set; } = false;
 
     public GleamPanel(Vector2 position, Vector2 size)
     {
@@ -49,12 +50,14 @@ public class GleamPanel : GleamElement
             switch (Layout)
             {
                 case GleamLayout.Vertical:
-                    child.Position = new Vector2(currentX, currentY);
+                    float childX = CenterChildren ? (Size.X - child.Size.X) / 2 : currentX;
+                    child.Position = new Vector2(childX, currentY);
                     currentY += child.Size.Y + Spacing;
                     break;
 
                 case GleamLayout.Horizontal:
-                    child.Position = new Vector2(currentX, currentY);
+                    float childY = CenterChildren ? (Size.Y - child.Size.Y) / 2 : currentY;
+                    child.Position = new Vector2(currentX, childY);
                     currentX += child.Size.X + Spacing;
                     break;
             }

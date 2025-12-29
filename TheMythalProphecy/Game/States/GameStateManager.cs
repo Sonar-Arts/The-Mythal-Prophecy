@@ -73,10 +73,27 @@ public class GameStateManager
     }
 
     /// <summary>
-    /// Draw the current active state
+    /// Draw the current active state.
+    /// If the top state is an overlay, also draws states below it.
     /// </summary>
     public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
     {
-        CurrentState?.Draw(spriteBatch, gameTime);
+        if (_stateStack.Count == 0)
+            return;
+
+        // Build list of states to draw (bottom-up for overlays)
+        var statesToDraw = new List<IGameState>();
+        foreach (var state in _stateStack)
+        {
+            statesToDraw.Insert(0, state); // Insert at beginning to reverse order
+            if (!state.IsOverlay)
+                break; // Stop at first non-overlay state
+        }
+
+        // Draw from bottom to top
+        foreach (var state in statesToDraw)
+        {
+            state.Draw(spriteBatch, gameTime);
+        }
     }
 }

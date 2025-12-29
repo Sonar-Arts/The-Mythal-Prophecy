@@ -33,16 +33,17 @@ public class GleamButton : GleamElement
 
     public override bool ContainsPoint(Vector2 point)
     {
-        // Use parallelogram hit detection
+        // Use parallelogram hit detection (centered within bounds)
         Rectangle bounds = Bounds;
         float skewOffset = bounds.Height * SkewFactor;
+        float centerOffset = skewOffset / 2f;
         float relY = point.Y - bounds.Y;
         float t = relY / bounds.Height;
 
         if (t < 0 || t > 1) return false;
 
-        float leftX = bounds.X + skewOffset * (1 - t);
-        float rightX = bounds.Right + skewOffset * (1 - t);
+        float leftX = bounds.X + skewOffset * (1 - t) - centerOffset;
+        float rightX = bounds.Right + skewOffset * (1 - t) - centerOffset;
 
         return point.X >= leftX && point.X <= rightX &&
                point.Y >= bounds.Y && point.Y <= bounds.Bottom;

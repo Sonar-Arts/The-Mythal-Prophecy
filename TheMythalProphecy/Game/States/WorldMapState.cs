@@ -107,7 +107,7 @@ public class WorldMapState : IGameState
             (keyState.IsKeyDown(Keys.Enter) && !_previousKeyState.IsKeyDown(Keys.Enter)))
         {
             // Open pause menu
-            _stateManager.PushState(new PauseMenuState(_stateManager));
+            _stateManager.PushState(new GleamPauseMenuState(GameServices.Content, _stateManager));
         }
 
         // Press B key to manually trigger battle for testing

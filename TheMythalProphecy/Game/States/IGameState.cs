@@ -9,6 +9,12 @@ namespace TheMythalProphecy.Game.States;
 public interface IGameState
 {
     /// <summary>
+    /// If true, this state renders as an overlay and the state below it will also be drawn.
+    /// Default is false (opaque state that fully replaces the previous state's visuals).
+    /// </summary>
+    bool IsOverlay => false;
+
+    /// <summary>
     /// Called when the state becomes active
     /// </summary>
     void Enter();
