@@ -148,7 +148,7 @@ public class gPauseMenuState : IGameState
 
     private void OnItemsClicked()
     {
-        _stateManager.PushState(new InventoryState(_stateManager));
+        _stateManager.PushState(new gInventoryState(_content, _stateManager));
     }
 
     private void OnEquipmentClicked()
