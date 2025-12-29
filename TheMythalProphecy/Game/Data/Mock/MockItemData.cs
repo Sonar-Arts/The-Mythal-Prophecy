@@ -24,7 +24,9 @@ public static class MockItemData
             SellPrice = 25,
             IsConsumable = true,
             IsUsableInBattle = true,
-            IsUsableInMenu = true
+            IsUsableInMenu = true,
+            ItemTargetType = TargetType.Ally,
+            IsMultiTarget = false
         });
 
         database.Register(new ItemDefinition
@@ -39,7 +41,9 @@ public static class MockItemData
             SellPrice = 100,
             IsConsumable = true,
             IsUsableInBattle = true,
-            IsUsableInMenu = true
+            IsUsableInMenu = true,
+            ItemTargetType = TargetType.Ally,
+            IsMultiTarget = false
         });
 
         // MP Restoration
@@ -55,7 +59,9 @@ public static class MockItemData
             SellPrice = 75,
             IsConsumable = true,
             IsUsableInBattle = true,
-            IsUsableInMenu = true
+            IsUsableInMenu = true,
+            ItemTargetType = TargetType.Ally,
+            IsMultiTarget = false
         });
 
         database.Register(new ItemDefinition
@@ -70,7 +76,9 @@ public static class MockItemData
             SellPrice = 200,
             IsConsumable = true,
             IsUsableInBattle = true,
-            IsUsableInMenu = true
+            IsUsableInMenu = true,
+            ItemTargetType = TargetType.Ally,
+            IsMultiTarget = false
         });
 
         // Full Restoration
@@ -87,7 +95,9 @@ public static class MockItemData
             SellPrice = 500,
             IsConsumable = true,
             IsUsableInBattle = true,
-            IsUsableInMenu = true
+            IsUsableInMenu = true,
+            ItemTargetType = TargetType.Ally,
+            IsMultiTarget = false
         });
 
         // Revival
@@ -103,7 +113,9 @@ public static class MockItemData
             SellPrice = 250,
             IsConsumable = true,
             IsUsableInBattle = true,
-            IsUsableInMenu = true
+            IsUsableInMenu = true,
+            ItemTargetType = TargetType.Ally,
+            IsMultiTarget = false
         });
 
         // Status Cure Items
@@ -119,7 +131,9 @@ public static class MockItemData
             SellPrice = 40,
             IsConsumable = true,
             IsUsableInBattle = true,
-            IsUsableInMenu = true
+            IsUsableInMenu = true,
+            ItemTargetType = TargetType.Ally,
+            IsMultiTarget = false
         });
 
         database.Register(new ItemDefinition
@@ -134,7 +148,9 @@ public static class MockItemData
             SellPrice = 50,
             IsConsumable = true,
             IsUsableInBattle = true,
-            IsUsableInMenu = true
+            IsUsableInMenu = true,
+            ItemTargetType = TargetType.Ally,
+            IsMultiTarget = false
         });
     }
 }

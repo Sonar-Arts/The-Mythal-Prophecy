@@ -22,6 +22,7 @@ namespace TheMythalProphecy.Game.States
         private BattleManager _battleManager;
         private BattleContext _battleContext;
         private BattleBackground _background;
+        private BattleTargetingSystem _targetingSystem;
         private KeyboardState _previousKeyState;
         private SpriteFont _font;
         private string _message;
@@ -56,6 +57,9 @@ namespace TheMythalProphecy.Game.States
 
             // Create battle manager
             _battleManager = new BattleManager(_battleContext);
+
+            // Create targeting system
+            _targetingSystem = new BattleTargetingSystem(_battleContext, _battleManager);
 
             // Subscribe to events
             GameServices.Events.Subscribe<CharacterDefeatedEvent>(OnCharacterDefeated);
@@ -169,34 +173,42 @@ namespace TheMythalProphecy.Game.States
             if (currentCombatant == null || !currentCombatant.IsPlayer)
                 return;
 
+            // Clear the just confirmed flag at the start of input handling
+            if (_targetingSystem.JustConfirmed)
+            {
+                _targetingSystem.ClearJustConfirmed();
+                return; // Skip this frame to prevent immediate reactivation
+            }
+
+            // If targeting system is active, let it handle input
+            if (_targetingSystem.IsActive)
+            {
+                _targetingSystem.HandleInput(keyState, _previousKeyState);
+                return;
+            }
+
+            // Action selection (activates targeting mode)
+
             // A = Attack
             if (keyState.IsKeyDown(Keys.A) && !_previousKeyState.IsKeyDown(Keys.A))
             {
-                var enemies = _battleContext.GetAliveEnemies(currentCombatant);
-                if (enemies.Count > 0)
-                {
-                    var target = enemies[0]; // Attack first enemy
-                    var action = new BattleAction(BattleActionType.Attack, currentCombatant, target);
-                    _battleManager.ProcessPlayerAction(action);
-                }
+                _targetingSystem.ActivateTargeting(BattleActionType.Attack, currentCombatant);
             }
 
-            // D = Defend
+            // D = Defend (no targeting needed)
             if (keyState.IsKeyDown(Keys.D) && !_previousKeyState.IsKeyDown(Keys.D))
             {
                 var action = new BattleAction(BattleActionType.Defend, currentCombatant, new List<Combatant>());
                 _battleManager.ProcessPlayerAction(action);
             }
 
-            // I = Use Item (potion on self)
+            // I = Use Item (activate targeting with item context)
             if (keyState.IsKeyDown(Keys.I) && !_previousKeyState.IsKeyDown(Keys.I))
             {
                 var inventory = GameServices.GameData.Inventory;
                 if (inventory.GetItemCount("potion") > 0)
                 {
-                    var action = new BattleAction(BattleActionType.UseItem, currentCombatant, currentCombatant);
-                    action.ItemId = "potion";
-                    _battleManager.ProcessPlayerAction(action);
+                    _targetingSystem.ActivateTargeting(BattleActionType.UseItem, currentCombatant, "potion");
                 }
                 else
                 {
@@ -277,13 +289,29 @@ namespace TheMythalProphecy.Game.States
                 sprite.Texture,
                 transform.Position,
                 sprite.SourceRectangle,
-                combatant.IsDead ? Color.Gray : Color.White, // Gray tint when dead
+                GetCombatantRenderColor(combatant),
                 transform.Rotation,
                 sprite.Origin,
                 2.0f, // Scale up to make sprites visible (128px frames)
                 flipHorizontal ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
                 sprite.LayerDepth
             );
+        }
+
+        /// <summary>
+        /// Get the render color for a combatant, including flash effects
+        /// </summary>
+        private Color GetCombatantRenderColor(Combatant combatant)
+        {
+            Color baseColor = combatant.IsDead ? Color.Gray : Color.White;
+
+            var flashComponent = combatant.Entity.GetComponent<TargetFlashComponent>();
+            if (flashComponent != null && flashComponent.Enabled)
+            {
+                baseColor *= flashComponent.CurrentAlpha;
+            }
+
+            return baseColor;
         }
 
         private void DrawBattleText(SpriteBatch spriteBatch)
@@ -305,6 +333,19 @@ namespace TheMythalProphecy.Game.States
             {
                 string controls = "A=Attack D=Defend I=Item F=Flee";
                 spriteBatch.DrawString(_font, controls, new Vector2(viewport.Width / 2 - 150, y), Color.Yellow);
+                y += 30;
+            }
+
+            // Draw targeting UI if active
+            if (_targetingSystem.IsActive)
+            {
+                string targetingText = "SELECT TARGET (Up/Down)";
+                spriteBatch.DrawString(_font, targetingText, new Vector2(viewport.Width / 2 - 120, y), Color.Yellow);
+                y += 30;
+
+                // Draw targeting mode
+                string modeText = _targetingSystem.CurrentMode.ToString().Replace("Single", "").Replace("All", "ALL ");
+                spriteBatch.DrawString(_font, modeText, new Vector2(viewport.Width / 2 - 50, y), Color.Cyan);
                 y += 30;
             }
 
@@ -398,6 +439,13 @@ namespace TheMythalProphecy.Game.States
                 if (animation != null)
                 {
                     animation.Update(gameTime);
+                }
+
+                // Update flash component if present
+                var flashComponent = combatant.Entity.GetComponent<TargetFlashComponent>();
+                if (flashComponent != null && flashComponent.Enabled)
+                {
+                    flashComponent.Update(gameTime);
                 }
 
                 // Sync sprite component with current animation frame

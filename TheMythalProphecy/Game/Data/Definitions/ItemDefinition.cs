@@ -29,6 +29,10 @@ public class ItemDefinition
     public List<string> RemovesStatusEffects { get; set; } = new();
     public bool RevivesCharacter { get; set; }
 
+    // Targeting properties
+    public TargetType ItemTargetType { get; set; } = TargetType.Ally;
+    public bool IsMultiTarget { get; set; } = false;
+
     // Icon and visual properties
     public string IconPath { get; set; }
 }
@@ -54,6 +58,17 @@ public enum ItemCategory
     KeyItems,
     Materials,
     Miscellaneous
+}
+
+/// <summary>
+/// Defines what type of targets an item can affect
+/// </summary>
+public enum TargetType
+{
+    Ally,    // Healing items, buffs (targets party members)
+    Enemy,   // Damage items (targets enemies)
+    Self,    // Self-only items
+    Any      // Flexible items (can target anyone)
 }
 
 /// <summary>

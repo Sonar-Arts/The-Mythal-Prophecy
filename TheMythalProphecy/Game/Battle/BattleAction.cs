@@ -19,7 +19,7 @@ namespace TheMythalProphecy.Game.Battle
         {
             ActionType = actionType;
             Actor = actor;
-            Targets = targets ?? new List<Combatant>();
+            Targets = targets != null ? new List<Combatant>(targets) : new List<Combatant>();
             IsExecuted = false;
         }
 

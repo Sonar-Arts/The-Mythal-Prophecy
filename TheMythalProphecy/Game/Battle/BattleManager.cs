@@ -164,23 +164,27 @@ namespace TheMythalProphecy.Game.Battle
         {
             var action = _context.CurrentTurnCombatant.QueuedAction;
 
-            if (action == null || action.IsExecuted)
+            if (action == null)
             {
-                // Action already executed, check victory
+                Console.WriteLine($"[BattleManager] ExecutingAction phase but action is null - transitioning to CheckVictory");
                 _currentPhase = BattlePhase.CheckVictory;
                 return;
             }
 
-            // Execute the action
-            ExecuteAction(action);
+            // Execute action on first frame
+            if (!action.IsExecuted)
+            {
+                // Execute the action
+                ExecuteAction(action);
 
-            // Mark as executed
-            action.IsExecuted = true;
+                // Mark as executed
+                action.IsExecuted = true;
 
-            // Start animation timer
-            _actionAnimationTimer = ACTION_ANIMATION_DURATION;
+                // Start animation timer
+                _actionAnimationTimer = ACTION_ANIMATION_DURATION;
+            }
 
-            // Wait for animation to complete
+            // Wait for animation to complete (runs every frame)
             _actionAnimationTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             if (_actionAnimationTimer <= 0)
@@ -271,7 +275,9 @@ namespace TheMythalProphecy.Game.Battle
         public void ProcessPlayerAction(BattleAction action)
         {
             if (_currentPhase != BattlePhase.PlayerInput)
+            {
                 return;
+            }
 
             _context.CurrentTurnCombatant.SetAction(action);
             _currentPhase = BattlePhase.ExecutingAction;
