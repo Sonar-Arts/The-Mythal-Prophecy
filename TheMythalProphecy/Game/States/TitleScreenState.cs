@@ -156,9 +156,8 @@ public class TitleScreenState : IGameState
 
     public void Resume()
     {
-        // Show UI when this state becomes active again
-        if (_menuPanel != null)
-            _menuPanel.Visible = true;
+        // Recreate UI to adapt to any resolution changes
+        CreateMenuUI();
 
         _previousMouseState = Mouse.GetState();
     }

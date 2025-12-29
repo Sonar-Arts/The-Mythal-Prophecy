@@ -1,10 +1,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using TheMythalProphecy.Game.States;
-using TheMythalProphecy.Game.Entities;
-using TheMythalProphecy.Game.Entities.Components;
+using TheMythalProphecy.Game.Data;
 using TheMythalProphecy.Game.Data.Mock;
+using TheMythalProphecy.Game.States;
 
 namespace TheMythalProphecy.Game.Core;
 
@@ -39,7 +38,12 @@ public class MythalGame : Microsoft.Xna.Framework.Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
         // Initialize game services (includes font/theme initialization)
-        GameServices.Initialize(Content, GraphicsDevice);
+        GameServices.Initialize(Content, GraphicsDevice, _graphics);
+
+        // Load and apply saved settings
+        var settings = GameSettings.Load();
+        settings.ApplyVideoSettings();
+        settings.ApplyAudioSettings();
 
         // Initialize mock data for development
         MockDataInitializer.Initialize();

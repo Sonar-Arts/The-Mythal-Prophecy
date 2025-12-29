@@ -271,7 +271,7 @@ public class gOptionsMenuState : IGameState
         };
 
         // Resolution
-        _resolutionLabel = new GleamLabel("Resolution", Vector2.Zero);
+        _resolutionLabel = new GleamLabel("Resolution", Vector2.Zero, new Vector2(contentWidth, 24));
         _videoSettingsPanel.AddChild(_resolutionLabel);
 
         _resolutionSelector = new GleamSelector(Vector2.Zero, new Vector2(contentWidth, 36));
@@ -295,7 +295,7 @@ public class gOptionsMenuState : IGameState
         _videoSettingsPanel.AddChild(_resolutionSelector);
 
         // Fullscreen
-        _fullscreenLabel = new GleamLabel("Fullscreen", Vector2.Zero);
+        _fullscreenLabel = new GleamLabel("Fullscreen", Vector2.Zero, new Vector2(contentWidth, 24));
         _videoSettingsPanel.AddChild(_fullscreenLabel);
 
         _fullscreenToggle = new GleamToggle(Vector2.Zero, new Vector2(100, 36), _settings.Fullscreen);
@@ -324,6 +324,7 @@ public class gOptionsMenuState : IGameState
     private void OnApply()
     {
         _settings.ApplyAudioSettings();
+        _settings.ApplyVideoSettings();
         _settings.Save();
         _stateManager.PopState();
     }
