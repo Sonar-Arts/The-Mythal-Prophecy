@@ -126,7 +126,7 @@ namespace TheMythalProphecy.Game.States
             // ESC for pause menu
             if (keyState.IsKeyDown(Keys.Escape) && !_previousKeyState.IsKeyDown(Keys.Escape))
             {
-                _stateManager.PushState(new GleamPauseMenuState(GameServices.Content, _stateManager));
+                _stateManager.PushState(new gPauseMenuState(GameServices.Content, _stateManager));
             }
 
             _previousKeyState = keyState;

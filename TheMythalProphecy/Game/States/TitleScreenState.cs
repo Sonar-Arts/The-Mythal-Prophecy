@@ -133,7 +133,7 @@ public class TitleScreenState : IGameState
 
     private void OnOptionsClicked()
     {
-        _stateManager.PushState(new GleamOptionsMenuState(_content, _stateManager));
+        _stateManager.PushState(new gOptionsMenuState(_content, _stateManager));
     }
 
     private void OnExitClicked()

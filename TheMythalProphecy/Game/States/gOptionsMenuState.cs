@@ -12,7 +12,7 @@ namespace TheMythalProphecy.Game.States;
 /// <summary>
 /// Options menu using GleamUI with cosmic/mystical aesthetic.
 /// </summary>
-public class GleamOptionsMenuState : IGameState
+public class gOptionsMenuState : IGameState
 {
     private readonly ContentManager _content;
     private readonly GameStateManager _stateManager;
@@ -69,7 +69,7 @@ public class GleamOptionsMenuState : IGameState
         (3840, 2160)
     };
 
-    public GleamOptionsMenuState(ContentManager content, GameStateManager stateManager)
+    public gOptionsMenuState(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;

@@ -122,6 +122,57 @@ public class GleamRenderer
     }
 
     /// <summary>
+    /// Draws a vertical gradient from bottom color to top color.
+    /// </summary>
+    public void DrawVerticalGradient(SpriteBatch spriteBatch, Rectangle bounds, Color bottomColor, Color topColor, float alpha = 1f)
+    {
+        if (_pixelTexture == null || bounds.Height <= 0) return;
+
+        for (int y = 0; y < bounds.Height; y++)
+        {
+            float t = y / (float)(bounds.Height - 1);
+            Color lineColor = Color.Lerp(bottomColor, topColor, t);
+            spriteBatch.Draw(_pixelTexture,
+                new Rectangle(bounds.X, bounds.Y + bounds.Height - 1 - y, bounds.Width, 1),
+                lineColor * alpha);
+        }
+    }
+
+    /// <summary>
+    /// Draws an inner glow effect at the top of a rectangle (bright highlight fading down).
+    /// </summary>
+    public void DrawInnerGlow(SpriteBatch spriteBatch, Rectangle bounds, Color glowColor, int glowHeight, float alpha = 1f)
+    {
+        if (_pixelTexture == null || glowHeight <= 0) return;
+
+        int actualHeight = Math.Min(glowHeight, bounds.Height);
+        for (int y = 0; y < actualHeight; y++)
+        {
+            float intensity = 1f - (y / (float)glowHeight);
+            spriteBatch.Draw(_pixelTexture,
+                new Rectangle(bounds.X, bounds.Y + y, bounds.Width, 1),
+                glowColor * alpha * intensity * 0.6f);
+        }
+    }
+
+    /// <summary>
+    /// Draws a bottom shadow effect (dark gradient fading up).
+    /// </summary>
+    public void DrawBottomShadow(SpriteBatch spriteBatch, Rectangle bounds, int shadowHeight, float alpha = 1f)
+    {
+        if (_pixelTexture == null || shadowHeight <= 0) return;
+
+        int actualHeight = Math.Min(shadowHeight, bounds.Height);
+        for (int y = 0; y < actualHeight; y++)
+        {
+            float intensity = 1f - (y / (float)shadowHeight);
+            spriteBatch.Draw(_pixelTexture,
+                new Rectangle(bounds.X, bounds.Bottom - 1 - y, bounds.Width, 1),
+                Color.Black * alpha * intensity * 0.3f);
+        }
+    }
+
+    /// <summary>
     /// Draws a filled rectangle.
     /// </summary>
     public void DrawRect(SpriteBatch spriteBatch, Rectangle bounds, Color color, float alpha = 1f)

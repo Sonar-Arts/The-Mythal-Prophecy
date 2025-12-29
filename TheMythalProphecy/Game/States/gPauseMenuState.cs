@@ -12,7 +12,7 @@ namespace TheMythalProphecy.Game.States;
 /// Pause menu using GleamUI with cosmic/mystical aesthetic.
 /// Displayed as a modal overlay when the player pauses the game.
 /// </summary>
-public class GleamPauseMenuState : IGameState
+public class gPauseMenuState : IGameState
 {
     public bool IsOverlay => true;
 
@@ -39,7 +39,7 @@ public class GleamPauseMenuState : IGameState
     private KeyboardState _previousKeyState;
     private MouseState _previousMouseState;
 
-    public GleamPauseMenuState(ContentManager content, GameStateManager stateManager)
+    public gPauseMenuState(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;
@@ -163,7 +163,7 @@ public class GleamPauseMenuState : IGameState
 
     private void OnPartyClicked()
     {
-        _stateManager.PushState(new PartyManagementState(_stateManager));
+        _stateManager.PushState(new gPartyManagementState(_content, _stateManager));
     }
 
     private void OnSaveClicked()
@@ -173,7 +173,7 @@ public class GleamPauseMenuState : IGameState
 
     private void OnOptionsClicked()
     {
-        _stateManager.PushState(new GleamOptionsMenuState(_content, _stateManager));
+        _stateManager.PushState(new gOptionsMenuState(_content, _stateManager));
     }
 
     private void OnResumeClicked()
