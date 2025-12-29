@@ -153,7 +153,7 @@ public class gPauseMenuState : IGameState
 
     private void OnEquipmentClicked()
     {
-        _stateManager.PushState(new EquipmentState(_stateManager));
+        _stateManager.PushState(new gEquipmentState(_content, _stateManager));
     }
 
     private void OnStatusClicked()

@@ -11,6 +11,7 @@ namespace TheMythalProphecy.Game.UI.Gleam;
 public class GleamEquipmentSlot : GleamElement
 {
     private const int Padding = 8;
+    private const string LongestSlotName = "Accessory"; // For column alignment
 
     /// <summary>
     /// Equipment slot type (e.g., "Weapon", "Armor", "Accessory")
@@ -21,6 +22,11 @@ public class GleamEquipmentSlot : GleamElement
     /// Name of the equipped item (null or empty for unequipped)
     /// </summary>
     public string ItemName { get; set; }
+
+    /// <summary>
+    /// Whether this slot is highlighted (for keyboard navigation selection)
+    /// </summary>
+    public bool IsHighlighted { get; set; }
 
     /// <summary>
     /// Whether the slot is empty (no item equipped)
@@ -59,6 +65,11 @@ public class GleamEquipmentSlot : GleamElement
         if (string.IsNullOrEmpty(rawName))
             return "---";
 
+        // Trim any leading/trailing whitespace
+        rawName = rawName.Trim();
+        if (string.IsNullOrEmpty(rawName))
+            return "---";
+
         var sb = new StringBuilder();
         bool capitalizeNext = true;
 
@@ -91,27 +102,33 @@ public class GleamEquipmentSlot : GleamElement
 
         if (font == null) return;
 
+        // Draw highlight background when selected
+        if (IsHighlighted)
+        {
+            renderer.DrawRect(spriteBatch, bounds, theme.MidPurple, Alpha);
+            renderer.DrawRectBorder(spriteBatch, bounds, theme.GoldBright, 2, Alpha);
+        }
+
         // Build display text
-        string slotLabel = $"{SlotType}: ";
+        string slotLabel = $"{SlotType}:";
         string itemText = IsEmpty ? "---" : FormatItemName(ItemName);
 
-        // Measure text for positioning
-        Vector2 slotSize = font.MeasureString(slotLabel);
-        Vector2 itemSize = font.MeasureString(itemText);
-        float totalWidth = slotSize.X + itemSize.X;
+        // Calculate fixed column width for alignment (based on longest slot name)
+        float columnWidth = font.MeasureString($"{LongestSlotName}:").X;
 
         // Center vertically
-        float textY = bounds.Y + (bounds.Height - slotSize.Y) / 2f;
+        float textY = bounds.Y + (bounds.Height - font.LineSpacing) / 2f;
         float textX = bounds.X + Padding;
 
-        // Draw slot type in gold
+        // Draw slot type in gold (left-aligned within column)
         renderer.DrawText(spriteBatch, font, slotLabel,
             new Vector2(textX, textY), theme.Gold, true, Alpha);
 
-        // Draw item name in white (or disabled if empty)
+        // Draw item name in white (or disabled if empty) - starts after fixed column width
+        float itemX = textX + columnWidth + 8; // 8px gap after colon column
         Color itemColor = IsEmpty ? theme.TextDisabled : theme.TextPrimary;
         renderer.DrawText(spriteBatch, font, itemText,
-            new Vector2(textX + slotSize.X, textY), itemColor, true, Alpha);
+            new Vector2(itemX, textY), itemColor, true, Alpha);
 
         // Subtle bottom separator line
         renderer.DrawRect(spriteBatch,
