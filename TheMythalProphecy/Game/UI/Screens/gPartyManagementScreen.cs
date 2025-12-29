@@ -11,7 +11,7 @@ namespace TheMythalProphecy.Game.States;
 /// Party management state using GleamUI with cosmic aesthetic.
 /// Allows swapping and reordering party members between active and reserve.
 /// </summary>
-public class gPartyManagementState : IGameState
+public class gPartyManagementScreen : IGameState
 {
     private readonly ContentManager _content;
     private readonly GameStateManager _stateManager;
@@ -43,7 +43,7 @@ public class gPartyManagementState : IGameState
     private KeyboardState _previousKeyState;
     private MouseState _previousMouseState;
 
-    public gPartyManagementState(ContentManager content, GameStateManager stateManager)
+    public gPartyManagementScreen(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;

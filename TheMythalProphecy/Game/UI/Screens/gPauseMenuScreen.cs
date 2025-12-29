@@ -12,7 +12,7 @@ namespace TheMythalProphecy.Game.States;
 /// Pause menu using GleamUI with cosmic/mystical aesthetic.
 /// Displayed as a modal overlay when the player pauses the game.
 /// </summary>
-public class gPauseMenuState : IGameState
+public class gPauseMenuScreen : IGameState
 {
     public bool IsOverlay => true;
 
@@ -39,7 +39,7 @@ public class gPauseMenuState : IGameState
     private KeyboardState _previousKeyState;
     private MouseState _previousMouseState;
 
-    public gPauseMenuState(ContentManager content, GameStateManager stateManager)
+    public gPauseMenuScreen(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;
@@ -148,22 +148,22 @@ public class gPauseMenuState : IGameState
 
     private void OnItemsClicked()
     {
-        _stateManager.PushState(new gInventoryState(_content, _stateManager));
+        _stateManager.PushState(new gInventoryScreen(_content, _stateManager));
     }
 
     private void OnEquipmentClicked()
     {
-        _stateManager.PushState(new gEquipmentState(_content, _stateManager));
+        _stateManager.PushState(new gEquipmentScreen(_content, _stateManager));
     }
 
     private void OnStatusClicked()
     {
-        _stateManager.PushState(new gCharacterStatusState(_content, _stateManager));
+        _stateManager.PushState(new gCharacterStatusScreen(_content, _stateManager));
     }
 
     private void OnPartyClicked()
     {
-        _stateManager.PushState(new gPartyManagementState(_content, _stateManager));
+        _stateManager.PushState(new gPartyManagementScreen(_content, _stateManager));
     }
 
     private void OnSaveClicked()
@@ -173,7 +173,7 @@ public class gPauseMenuState : IGameState
 
     private void OnOptionsClicked()
     {
-        _stateManager.PushState(new gOptionsMenuState(_content, _stateManager));
+        _stateManager.PushState(new gOptionsMenuScreen(_content, _stateManager));
     }
 
     private void OnResumeClicked()
@@ -188,7 +188,7 @@ public class gPauseMenuState : IGameState
         {
             _stateManager.PopState();
         }
-        _stateManager.ChangeState(new TitleScreenState(GameServices.Content, _stateManager));
+        _stateManager.ChangeState(new TitleScreenScreen(GameServices.Content, _stateManager));
     }
 
     public void Exit()

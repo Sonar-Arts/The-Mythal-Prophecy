@@ -15,7 +15,7 @@ namespace TheMythalProphecy.Game.States;
 /// Character status state using GleamUI with cosmic aesthetic.
 /// Displays detailed character information including stats, equipment, and status effects.
 /// </summary>
-public class gCharacterStatusState : IGameState
+public class gCharacterStatusScreen : IGameState
 {
     private readonly ContentManager _content;
     private readonly GameStateManager _stateManager;
@@ -57,7 +57,7 @@ public class gCharacterStatusState : IGameState
     private KeyboardState _previousKeyState;
     private MouseState _previousMouseState;
 
-    public gCharacterStatusState(ContentManager content, GameStateManager stateManager)
+    public gCharacterStatusScreen(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;

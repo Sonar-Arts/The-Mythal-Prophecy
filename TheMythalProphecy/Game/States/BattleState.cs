@@ -126,7 +126,7 @@ namespace TheMythalProphecy.Game.States
             // ESC for pause menu
             if (keyState.IsKeyDown(Keys.Escape) && !_previousKeyState.IsKeyDown(Keys.Escape))
             {
-                _stateManager.PushState(new gPauseMenuState(GameServices.Content, _stateManager));
+                _stateManager.PushState(new gPauseMenuScreen(GameServices.Content, _stateManager));
             }
 
             _previousKeyState = keyState;
@@ -371,7 +371,7 @@ namespace TheMythalProphecy.Game.States
             Console.WriteLine("Defeat! Game Over");
 
             // Return to title screen
-            _stateManager.ChangeState(new TitleScreenState(GameServices.Content, _stateManager));
+            _stateManager.ChangeState(new TitleScreenScreen(GameServices.Content, _stateManager));
         }
 
         /// <summary>

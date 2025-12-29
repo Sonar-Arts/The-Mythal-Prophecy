@@ -12,7 +12,7 @@ namespace TheMythalProphecy.Game.States;
 /// <summary>
 /// Title screen state - displays game logo and main menu
 /// </summary>
-public class TitleScreenState : IGameState
+public class TitleScreenScreen : IGameState
 {
     private readonly ContentManager _content;
     private readonly GameStateManager _stateManager;
@@ -35,7 +35,7 @@ public class TitleScreenState : IGameState
     private GleamButton _exitButton;
     private MouseState _previousMouseState;
 
-    public TitleScreenState(ContentManager content, GameStateManager stateManager)
+    public TitleScreenScreen(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;
@@ -133,7 +133,7 @@ public class TitleScreenState : IGameState
 
     private void OnOptionsClicked()
     {
-        _stateManager.PushState(new gOptionsMenuState(_content, _stateManager));
+        _stateManager.PushState(new gOptionsMenuScreen(_content, _stateManager));
     }
 
     private void OnExitClicked()

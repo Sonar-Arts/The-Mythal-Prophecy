@@ -18,7 +18,7 @@ namespace TheMythalProphecy.Game.States;
 /// Inventory menu state using GleamUI with cosmic aesthetic.
 /// Allows browsing and using items on party members.
 /// </summary>
-public class gInventoryState : IGameState
+public class gInventoryScreen : IGameState
 {
     private readonly ContentManager _content;
     private readonly GameStateManager _stateManager;
@@ -70,7 +70,7 @@ public class gInventoryState : IGameState
     // Cached filtered item IDs
     private List<string> _filteredItemIds = new();
 
-    public gInventoryState(ContentManager content, GameStateManager stateManager)
+    public gInventoryScreen(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;

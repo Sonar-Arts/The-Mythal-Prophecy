@@ -52,7 +52,7 @@ public class MythalGame : Microsoft.Xna.Framework.Game
         _stateManager = new GameStateManager();
 
         // Set initial state to title screen
-        var titleState = new TitleScreenState(Content, _stateManager);
+        var titleState = new TitleScreenScreen(Content, _stateManager);
         _stateManager.ChangeState(titleState);
     }
 

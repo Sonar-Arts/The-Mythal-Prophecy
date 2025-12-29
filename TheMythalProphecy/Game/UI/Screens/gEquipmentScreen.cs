@@ -18,7 +18,7 @@ namespace TheMythalProphecy.Game.States;
 /// Equipment menu state using GleamUI with cosmic aesthetic.
 /// Allows equipping/unequipping weapons, armor, and accessories.
 /// </summary>
-public class gEquipmentState : IGameState
+public class gEquipmentScreen : IGameState
 {
     private readonly ContentManager _content;
     private readonly GameStateManager _stateManager;
@@ -64,7 +64,7 @@ public class gEquipmentState : IGameState
     // Cached equipment IDs for the current filter
     private List<string> _filteredEquipmentIds = new();
 
-    public gEquipmentState(ContentManager content, GameStateManager stateManager)
+    public gEquipmentScreen(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;
