@@ -56,3 +56,8 @@
 /processor:EffectProcessor
 /build:Effects/LogoShimmer.fx
 
+#begin Effects/LogoGlow.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/build:Effects/LogoGlow.fx
+

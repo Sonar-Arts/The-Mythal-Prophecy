@@ -9,7 +9,7 @@ public static class StartupAnimationConfig
 {
     // Phase durations (seconds)
     public const float SubmarineDuration = 2.5f;
-    public const float FlashDuration = 0.6f;
+    public const float FlashDuration = 2.0f;
     public const float AirshipDuration = 3.5f;
     public const float TextRevealDuration = 1.2f;
     public const float HoldDuration = 2.5f;
@@ -47,4 +47,7 @@ public static class StartupAnimationConfig
 
     // Bubble colors
     public static readonly Color BubbleColor = new(150, 200, 255);
+
+    // Flash color
+    public static readonly Color FlashColor = new(100, 150, 255);
 }

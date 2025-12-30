@@ -29,18 +29,23 @@ public class PrimitiveRenderer : IDisposable
 
     public void DrawFilledCircle(SpriteBatch spriteBatch, Vector2 center, float radius, Color color)
     {
-        int steps = Math.Max(8, (int)(radius / 2));
-        for (int i = 0; i < steps; i++)
+        // Draw every single row to eliminate scan lines
+        int iRadius = (int)MathF.Ceiling(radius);
+        float radiusSq = radius * radius;
+
+        for (int y = -iRadius; y <= iRadius; y++)
         {
-            float y = -radius + (2 * radius * i / steps);
-            float halfWidth = MathF.Sqrt(radius * radius - y * y);
-            var rect = new Rectangle(
-                (int)(center.X - halfWidth),
-                (int)(center.Y + y),
-                (int)(halfWidth * 2),
-                (int)(2 * radius / steps) + 1
-            );
-            spriteBatch.Draw(_pixel, rect, color);
+            float halfWidth = MathF.Sqrt(radiusSq - y * y);
+            if (halfWidth < 0.5f) continue;
+
+            int left = (int)(center.X - halfWidth);
+            int right = (int)(center.X + halfWidth);
+            int width = right - left + 1;
+
+            if (width > 0)
+            {
+                spriteBatch.Draw(_pixel, new Rectangle(left, (int)center.Y + y, width, 1), color);
+            }
         }
     }
 

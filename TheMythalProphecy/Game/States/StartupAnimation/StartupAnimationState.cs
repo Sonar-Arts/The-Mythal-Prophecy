@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Content;
@@ -34,8 +35,10 @@ public class StartupAnimationState : IGameState
     // Rendering
     private PrimitiveRenderer _renderer;
     private BackgroundRenderer _backgroundRenderer;
-    private SpriteFont _retroFont;
-    private SpriteFont _fantasyFont;
+    private Texture2D _retroLogoTexture;
+    private Texture2D _fantasyLogoTexture;
+    private BlueVortex _blueVortex;
+    private Effect _logoGlowEffect;
 
     // Entities
     private Submarine _submarine;
@@ -82,10 +85,23 @@ public class StartupAnimationState : IGameState
         // Initialize renderers
         _renderer = new PrimitiveRenderer(GameServices.GraphicsDevice);
         _backgroundRenderer = new BackgroundRenderer(_screenWidth, _screenHeight);
+        _blueVortex = new BlueVortex(_screenWidth, _screenHeight);
 
-        // Load logo fonts
-        _retroFont = _content.Load<SpriteFont>("Fonts/RetroLogo");
-        _fantasyFont = _content.Load<SpriteFont>("Fonts/FantasyLogo");
+        // Load logo textures
+        var retroLogoPath = Path.Combine("Game", "Art", "Logos", "SonarArts_Retro.png");
+        using (var stream = File.OpenRead(retroLogoPath))
+        {
+            _retroLogoTexture = Texture2D.FromStream(GameServices.GraphicsDevice, stream);
+        }
+
+        var fantasyLogoPath = Path.Combine("Game", "Art", "Logos", "SonarArts_Fantasy.png");
+        using (var stream = File.OpenRead(fantasyLogoPath))
+        {
+            _fantasyLogoTexture = Texture2D.FromStream(GameServices.GraphicsDevice, stream);
+        }
+
+        // Load glow shader
+        _logoGlowEffect = _content.Load<Effect>("Effects/LogoGlow");
 
         // Initialize entities (static positions)
         _submarine = new Submarine(_screenWidth, _screenHeight);
@@ -115,6 +131,8 @@ public class StartupAnimationState : IGameState
     public void Exit()
     {
         _renderer?.Dispose();
+        _retroLogoTexture?.Dispose();
+        _fantasyLogoTexture?.Dispose();
         _tweenEngine.Clear();
     }
 
@@ -160,11 +178,12 @@ public class StartupAnimationState : IGameState
                 break;
 
             case AnimationPhase.FlashTransition:
-                // Start flash fade-out after flash-in completes
-                if (!_flashFadeOutStarted && _flashOpacity != null && _flashOpacity.IsComplete)
+                // Hold flash at full opacity, then fade out smoothly
+                // Flash in takes ~0.25s, hold until 0.8s, then fade out
+                if (!_flashFadeOutStarted && _phaseElapsed >= 0.8f)
                 {
                     _flashFadeOutStarted = true;
-                    _flashOpacity = _tweenEngine.TweenFloat(1f, 0f, 0.4f, EasingType.EaseOutCubic);
+                    _flashOpacity = _tweenEngine.TweenFloat(1f, 0f, 1.2f, EasingType.EaseInOutQuad);
                 }
 
                 // Update sonar color transition
@@ -234,6 +253,10 @@ public class StartupAnimationState : IGameState
                          _phase == AnimationPhase.Hold ||
                          _phase == AnimationPhase.FadeToBlack;
 
+        // Draw sky elements during late flash transition so they're loaded behind the flash
+        bool shouldDrawSkyElements = isSkyPhase ||
+                                     (_phase == AnimationPhase.FlashTransition && !isOceanPhase);
+
         // Draw background
         if (isOceanPhase)
         {
@@ -254,7 +277,7 @@ public class StartupAnimationState : IGameState
         {
             DrawRetroLogo(spriteBatch);
         }
-        else if (isSkyPhase)
+        else if (shouldDrawSkyElements)
         {
             DrawFantasyLogo(spriteBatch);
         }
@@ -268,8 +291,8 @@ public class StartupAnimationState : IGameState
             DrawBubbles(spriteBatch);
         }
 
-        // Draw clouds behind airship (sky phase only)
-        if (isSkyPhase)
+        // Draw clouds behind airship
+        if (shouldDrawSkyElements)
         {
             DrawClouds(spriteBatch);
         }
@@ -285,18 +308,17 @@ public class StartupAnimationState : IGameState
             _airship.Draw(spriteBatch, _renderer);
         }
 
-        // Draw birds in front of airship (sky phase only)
-        if (isSkyPhase)
+        // Draw birds in front of airship
+        if (shouldDrawSkyElements)
         {
             DrawBirds(spriteBatch);
         }
 
-        // Draw flash overlay
+        // Draw blue vortex flash overlay
         if (_phase == AnimationPhase.FlashTransition && _flashOpacity != null)
         {
             float opacity = _flashOpacity.Current;
-            _renderer.DrawRectangle(spriteBatch, new Rectangle(0, 0, _screenWidth, _screenHeight),
-                Color.White * opacity);
+            _blueVortex.Draw(spriteBatch, _renderer, _phaseElapsed, opacity);
         }
 
         // Draw fade to black overlay
@@ -346,8 +368,8 @@ public class StartupAnimationState : IGameState
         _tweenEngine.Clear();
         _flashFadeOutStarted = false;
 
-        // Flash in quickly
-        _flashOpacity = _tweenEngine.TweenFloat(0f, 1f, 0.15f, EasingType.EaseInQuad);
+        // Quick but smooth fade in
+        _flashOpacity = _tweenEngine.TweenFloat(0f, 1f, 0.25f, EasingType.EaseOutQuad);
 
         // Transition sonar color from green to purple
         _colorTransition = _tweenEngine.TweenFloat(0f, 1f, 0.5f, EasingType.EaseInOutQuad);
@@ -504,12 +526,12 @@ public class StartupAnimationState : IGameState
         if (targetReveal > _logoRevealAmount)
             _logoRevealAmount = targetReveal;
 
-        LogoRenderer.DrawRetroLogo(spriteBatch, _retroFont, _screenWidth, _screenHeight, _logoRevealAmount);
+        LogoRenderer.DrawRetroLogo(spriteBatch, _retroLogoTexture, _screenWidth, _screenHeight, _logoRevealAmount);
     }
 
     private void DrawFantasyLogo(SpriteBatch spriteBatch)
     {
-        LogoRenderer.DrawFantasyLogo(spriteBatch, _fantasyFont, _screenWidth, _screenHeight);
+        LogoRenderer.DrawFantasyLogo(spriteBatch, _fantasyLogoTexture, _logoGlowEffect, _screenWidth, _screenHeight);
     }
 
     #endregion
