@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using TheMythalProphecy.Game.Data;
 using TheMythalProphecy.Game.Data.Mock;
 using TheMythalProphecy.Game.States;
+using TheMythalProphecy.Game.States.StartupAnimation;
 
 namespace TheMythalProphecy.Game.Core;
 
@@ -51,9 +52,9 @@ public class MythalGame : Microsoft.Xna.Framework.Game
         // Initialize state manager
         _stateManager = new GameStateManager();
 
-        // Set initial state to title screen
-        var titleState = new TitleScreenScreen(Content, _stateManager);
-        _stateManager.ChangeState(titleState);
+        // Set initial state to startup animation
+        var startupState = new StartupAnimationState(Content, _stateManager);
+        _stateManager.ChangeState(startupState);
     }
 
     protected override void Update(GameTime gameTime)
