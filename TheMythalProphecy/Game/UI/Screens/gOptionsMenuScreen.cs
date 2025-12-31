@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using TheMythalProphecy.Game.Core;
 using TheMythalProphecy.Game.Data;
+using TheMythalProphecy.Game.States.Tests;
 using TheMythalProphecy.Game.UI.Gleam;
 
 namespace TheMythalProphecy.Game.States;
@@ -36,6 +37,7 @@ public class gOptionsMenuScreen : IGameState
     // Category buttons
     private GleamButton _audioButton;
     private GleamButton _videoButton;
+    private GleamButton _testsButton;
     private int _selectedCategory;
 
     // Audio controls
@@ -53,6 +55,9 @@ public class gOptionsMenuScreen : IGameState
     private GleamSelector _resolutionSelector;
     private GleamLabel _fullscreenLabel;
     private GleamToggle _fullscreenToggle;
+
+    // Tests controls
+    private GleamPanel _testsSettingsPanel;
 
     // Action buttons
     private GleamButton _applyButton;
@@ -159,8 +164,12 @@ public class gOptionsMenuScreen : IGameState
         _videoButton = new GleamButton("Video", Vector2.Zero, new Vector2(categoryWidth - 16, buttonHeight));
         _videoButton.OnClick += _ => SelectCategory(1);
 
+        _testsButton = new GleamButton("Tests", Vector2.Zero, new Vector2(categoryWidth - 16, buttonHeight));
+        _testsButton.OnClick += _ => SelectCategory(2);
+
         _categoryPanel.AddChild(_audioButton);
         _categoryPanel.AddChild(_videoButton);
+        _categoryPanel.AddChild(_testsButton);
         _mainPanel.AddChild(_categoryPanel);
 
         // Settings panel (right side)
@@ -179,6 +188,9 @@ public class gOptionsMenuScreen : IGameState
 
         // Create video settings
         CreateVideoSettings(settingsWidth);
+
+        // Create tests settings
+        CreateTestsSettings(settingsWidth);
 
         // Button panel (bottom)
         _buttonPanel = new GleamPanel(
@@ -306,6 +318,54 @@ public class gOptionsMenuScreen : IGameState
         _videoSettingsPanel.AddChild(_fullscreenToggle);
     }
 
+    private void CreateTestsSettings(int width)
+    {
+        int contentWidth = width - 32;
+
+        _testsSettingsPanel = new GleamPanel(Vector2.Zero, new Vector2(width, 300))
+        {
+            Layout = GleamLayout.Vertical,
+            Spacing = 16,
+            Padding = 16,
+            DrawBackground = false,
+            DrawBorder = false
+        };
+
+        // Section header
+        var headerLabel = new GleamLabel("3D Rendering Tests", Vector2.Zero, new Vector2(contentWidth, 28))
+        {
+            TextColor = new Color(255, 215, 0), // Gold color
+            AutoFit = true
+        };
+        _testsSettingsPanel.AddChild(headerLabel);
+
+        // Description
+        var descLabel = new GleamLabel("Test 3D rendering capabilities", Vector2.Zero, new Vector2(contentWidth, 20))
+        {
+            TextColor = new Color(180, 180, 180),
+            Scale = 0.8f
+        };
+        _testsSettingsPanel.AddChild(descLabel);
+
+        // Icosahedron test button - wider to fit text in parallelogram
+        var icosahedronButton = new GleamButton("Icosahedron", Vector2.Zero, new Vector2(180, 45));
+        icosahedronButton.OnClick += _ => LaunchIcosahedronTest();
+        _testsSettingsPanel.AddChild(icosahedronButton);
+
+        // Instructions
+        var instructionsLabel = new GleamLabel("Orbit camera with mouse drag", Vector2.Zero, new Vector2(contentWidth, 20))
+        {
+            TextColor = new Color(140, 140, 140),
+            Scale = 0.75f
+        };
+        _testsSettingsPanel.AddChild(instructionsLabel);
+    }
+
+    private void LaunchIcosahedronTest()
+    {
+        _stateManager.PushState(new IcosahedronTestState(_content, _stateManager));
+    }
+
     private void SelectCategory(int index)
     {
         _selectedCategory = index;
@@ -313,10 +373,17 @@ public class gOptionsMenuScreen : IGameState
         // Update button states
         _audioButton.NormalColor = index == 0 ? _theme.MidPurple : null;
         _videoButton.NormalColor = index == 1 ? _theme.MidPurple : null;
+        _testsButton.NormalColor = index == 2 ? _theme.MidPurple : null;
 
         // Swap settings panel content
         _settingsPanel.ClearChildren();
-        var panel = index == 0 ? _audioSettingsPanel : _videoSettingsPanel;
+        var panel = index switch
+        {
+            0 => _audioSettingsPanel,
+            1 => _videoSettingsPanel,
+            2 => _testsSettingsPanel,
+            _ => _audioSettingsPanel
+        };
         panel.Size = new Vector2(_settingsPanel.Size.X, _settingsPanel.Size.Y);
         _settingsPanel.AddChild(panel);
     }
