@@ -12,7 +12,7 @@ namespace TheMythalProphecy.Game.States;
 /// <summary>
 /// Title screen state - displays game logo and main menu
 /// </summary>
-public class TitleScreenState : IGameState
+public class TitleScreenScreen : IGameState
 {
     private readonly ContentManager _content;
     private readonly GameStateManager _stateManager;
@@ -25,6 +25,10 @@ public class TitleScreenState : IGameState
     private SpriteFont _menuFont;
     private float _elapsedTime;
 
+    // Fade-in from black
+    private const float FadeInDuration = 1.0f;
+    private float _fadeInProgress;
+
     // GleamUI
     private GleamTheme _theme;
     private GleamRenderer _renderer;
@@ -35,7 +39,7 @@ public class TitleScreenState : IGameState
     private GleamButton _exitButton;
     private MouseState _previousMouseState;
 
-    public TitleScreenState(ContentManager content, GameStateManager stateManager)
+    public TitleScreenScreen(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;
@@ -66,6 +70,9 @@ public class TitleScreenState : IGameState
         _theme.Initialize(defaultFont, _menuFont);
         _renderer = new GleamRenderer();
         _renderer.Initialize(GameServices.GraphicsDevice, _content, _theme);
+
+        // Start with screen fully black, will fade in
+        _fadeInProgress = 0f;
 
         CreateMenuUI();
     }
@@ -133,7 +140,7 @@ public class TitleScreenState : IGameState
 
     private void OnOptionsClicked()
     {
-        _stateManager.PushState(new GleamOptionsMenuState(_content, _stateManager));
+        _stateManager.PushState(new gOptionsMenuScreen(_content, _stateManager));
     }
 
     private void OnExitClicked()
@@ -156,17 +163,24 @@ public class TitleScreenState : IGameState
 
     public void Resume()
     {
-        // Show UI when this state becomes active again
-        if (_menuPanel != null)
-            _menuPanel.Visible = true;
+        // Recreate UI to adapt to any resolution changes
+        CreateMenuUI();
 
         _previousMouseState = Mouse.GetState();
     }
 
     public void Update(GameTime gameTime)
     {
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
         // Track elapsed time for shader animation
-        _elapsedTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _elapsedTime += deltaTime;
+
+        // Update fade-in progress
+        if (_fadeInProgress < 1f)
+        {
+            _fadeInProgress = MathHelper.Min(1f, _fadeInProgress + deltaTime / FadeInDuration);
+        }
 
         // Handle mouse input for GleamUI
         var mouseState = Mouse.GetState();
@@ -263,6 +277,15 @@ public class TitleScreenState : IGameState
         spriteBatch.Begin(blendState: BlendState.AlphaBlend);
         _menuPanel.Draw(spriteBatch, _renderer);
         spriteBatch.End();
+
+        // === Layer 5: Fade-in from black overlay ===
+        if (_fadeInProgress < 1f)
+        {
+            float fadeOpacity = 1f - _fadeInProgress;
+            spriteBatch.Begin(blendState: BlendState.AlphaBlend);
+            spriteBatch.Draw(_pixelTexture, screenRect, Color.Black * fadeOpacity);
+            spriteBatch.End();
+        }
 
         // Resume normal batch for MythalGame
         spriteBatch.Begin();

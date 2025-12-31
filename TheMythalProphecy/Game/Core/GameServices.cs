@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -20,6 +21,7 @@ public static class GameServices
     public static InputManager Input { get; private set; }
     public static ContentManager Content { get; private set; }
     public static GraphicsDevice GraphicsDevice { get; private set; }
+    public static GraphicsDeviceManager Graphics { get; private set; }
     public static UIManager UI { get; private set; }
     public static EventManager Events { get; private set; }
     public static AnimationManager Animations { get; private set; }
@@ -30,10 +32,11 @@ public static class GameServices
     /// <summary>
     /// Initialize the game services
     /// </summary>
-    public static void Initialize(ContentManager content, GraphicsDevice graphicsDevice)
+    public static void Initialize(ContentManager content, GraphicsDevice graphicsDevice, GraphicsDeviceManager graphics = null)
     {
         Content = content;
         GraphicsDevice = graphicsDevice;
+        Graphics = graphics;
         Input = new InputManager();
         UI = new UIManager(graphicsDevice);
         Events = new EventManager();

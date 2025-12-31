@@ -64,6 +64,19 @@ public class GleamPanel : GleamElement
         }
     }
 
+    public override void Draw(SpriteBatch spriteBatch, GleamRenderer renderer)
+    {
+        if (!Visible) return;
+
+        // Apply layout before drawing to prevent first-frame flicker
+        if (Layout != GleamLayout.None)
+        {
+            ApplyLayout();
+        }
+
+        base.Draw(spriteBatch, renderer);
+    }
+
     protected override void DrawSelf(SpriteBatch spriteBatch, GleamRenderer renderer)
     {
         var theme = renderer.Theme;

@@ -27,6 +27,20 @@
 /processorParam:TextureFormat=Compressed
 /build:Fonts/MenuTitle.spritefont
 
+#begin Fonts/RetroLogo.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/RetroLogo.spritefont
+
+#begin Fonts/FantasyLogo.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/FantasyLogo.spritefont
+
 #begin Effects/Starfall.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -41,4 +55,9 @@
 /importer:EffectImporter
 /processor:EffectProcessor
 /build:Effects/LogoShimmer.fx
+
+#begin Effects/LogoGlow.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/build:Effects/LogoGlow.fx
 

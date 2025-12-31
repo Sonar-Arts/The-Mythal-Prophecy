@@ -1,10 +1,10 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using TheMythalProphecy.Game.States;
-using TheMythalProphecy.Game.Entities;
-using TheMythalProphecy.Game.Entities.Components;
+using TheMythalProphecy.Game.Data;
 using TheMythalProphecy.Game.Data.Mock;
+using TheMythalProphecy.Game.States;
+using TheMythalProphecy.Game.States.StartupAnimation;
 
 namespace TheMythalProphecy.Game.Core;
 
@@ -39,7 +39,12 @@ public class MythalGame : Microsoft.Xna.Framework.Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
         // Initialize game services (includes font/theme initialization)
-        GameServices.Initialize(Content, GraphicsDevice);
+        GameServices.Initialize(Content, GraphicsDevice, _graphics);
+
+        // Load and apply saved settings
+        var settings = GameSettings.Load();
+        settings.ApplyVideoSettings();
+        settings.ApplyAudioSettings();
 
         // Initialize mock data for development
         MockDataInitializer.Initialize();
@@ -47,9 +52,9 @@ public class MythalGame : Microsoft.Xna.Framework.Game
         // Initialize state manager
         _stateManager = new GameStateManager();
 
-        // Set initial state to title screen
-        var titleState = new TitleScreenState(Content, _stateManager);
-        _stateManager.ChangeState(titleState);
+        // Set initial state to startup animation
+        var startupState = new StartupAnimationState(Content, _stateManager);
+        _stateManager.ChangeState(startupState);
     }
 
     protected override void Update(GameTime gameTime)

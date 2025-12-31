@@ -26,15 +26,24 @@ public class HudTheme : IGleamTheme
     public Color TextDisabled { get; } = new Color(100, 100, 120);
 
     // HP Bar colors (3-tier cosmic variant)
-    public Color HpFull { get; } = new Color(80, 220, 180);       // Ethereal teal
-    public Color HpMedium { get; } = new Color(220, 180, 80);     // Gold-amber warning
-    public Color HpLow { get; } = new Color(220, 80, 100);        // Cosmic rose-red
+    public Color HpFull { get; } = new Color(80, 220, 180);       // Ethereal teal (bright)
+    public Color HpFullDark { get; } = new Color(30, 80, 60);     // Ethereal teal (dark)
+    public Color HpMedium { get; } = new Color(220, 180, 80);     // Gold-amber warning (bright)
+    public Color HpMediumDark { get; } = new Color(80, 60, 20);   // Gold-amber warning (dark)
+    public Color HpLow { get; } = new Color(220, 80, 100);        // Cosmic rose-red (bright)
+    public Color HpLowDark { get; } = new Color(80, 25, 35);      // Cosmic rose-red (dark)
     public Color HpBackground { get; } = new Color(20, 40, 35);   // Dark teal
+    public Color HpGlow { get; } = new Color(150, 255, 220);      // Bright teal glow
+    public Color HpGlowLow { get; } = new Color(255, 150, 160);   // Bright red glow
 
     // MP Bar colors
-    public Color MpFull { get; } = new Color(120, 140, 255);      // Arcane blue
-    public Color MpLow { get; } = new Color(80, 60, 140);         // Dim purple
+    public Color MpFull { get; } = new Color(120, 140, 255);      // Arcane blue (bright)
+    public Color MpFullDark { get; } = new Color(35, 45, 100);    // Arcane blue (dark)
+    public Color MpLow { get; } = new Color(80, 60, 140);         // Dim purple (bright)
+    public Color MpLowDark { get; } = new Color(30, 25, 60);      // Dim purple (dark)
     public Color MpBackground { get; } = new Color(20, 20, 50);   // Deep blue-purple
+    public Color MpGlow { get; } = new Color(180, 200, 255);      // Bright blue glow
+    public Color MpGlowLow { get; } = new Color(140, 120, 200);   // Dim purple glow
 
     // Message log colors
     public Color MessageSystem { get; } = new Color(180, 220, 255);   // Soft cyan
@@ -71,7 +80,7 @@ public class HudTheme : IGleamTheme
     }
 
     /// <summary>
-    /// Gets the HP bar fill color based on current percentage.
+    /// Gets the HP bar fill color (bright) based on current percentage.
     /// </summary>
     public Color GetHpColor(float percentage)
     {
@@ -81,11 +90,48 @@ public class HudTheme : IGleamTheme
     }
 
     /// <summary>
-    /// Gets the MP bar fill color based on current percentage.
+    /// Gets the HP bar fill color (dark) for gradient bottom.
+    /// </summary>
+    public Color GetHpColorDark(float percentage)
+    {
+        if (percentage <= 0.25f) return HpLowDark;
+        if (percentage <= 0.5f) return HpMediumDark;
+        return HpFullDark;
+    }
+
+    /// <summary>
+    /// Gets the HP glow color based on current percentage.
+    /// </summary>
+    public Color GetHpGlowColor(float percentage)
+    {
+        if (percentage <= 0.25f) return HpGlowLow;
+        return HpGlow;
+    }
+
+    /// <summary>
+    /// Gets the MP bar fill color (bright) based on current percentage.
     /// </summary>
     public Color GetMpColor(float percentage)
     {
         if (percentage <= 0.25f) return MpLow;
         return MpFull;
+    }
+
+    /// <summary>
+    /// Gets the MP bar fill color (dark) for gradient bottom.
+    /// </summary>
+    public Color GetMpColorDark(float percentage)
+    {
+        if (percentage <= 0.25f) return MpLowDark;
+        return MpFullDark;
+    }
+
+    /// <summary>
+    /// Gets the MP glow color based on current percentage.
+    /// </summary>
+    public Color GetMpGlowColor(float percentage)
+    {
+        if (percentage <= 0.25f) return MpGlowLow;
+        return MpGlow;
     }
 }

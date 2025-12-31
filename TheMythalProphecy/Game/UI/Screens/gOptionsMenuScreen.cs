@@ -12,7 +12,7 @@ namespace TheMythalProphecy.Game.States;
 /// <summary>
 /// Options menu using GleamUI with cosmic/mystical aesthetic.
 /// </summary>
-public class GleamOptionsMenuState : IGameState
+public class gOptionsMenuScreen : IGameState
 {
     private readonly ContentManager _content;
     private readonly GameStateManager _stateManager;
@@ -69,7 +69,7 @@ public class GleamOptionsMenuState : IGameState
         (3840, 2160)
     };
 
-    public GleamOptionsMenuState(ContentManager content, GameStateManager stateManager)
+    public gOptionsMenuScreen(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
         _stateManager = stateManager;
@@ -271,7 +271,7 @@ public class GleamOptionsMenuState : IGameState
         };
 
         // Resolution
-        _resolutionLabel = new GleamLabel("Resolution", Vector2.Zero);
+        _resolutionLabel = new GleamLabel("Resolution", Vector2.Zero, new Vector2(contentWidth, 24));
         _videoSettingsPanel.AddChild(_resolutionLabel);
 
         _resolutionSelector = new GleamSelector(Vector2.Zero, new Vector2(contentWidth, 36));
@@ -295,7 +295,7 @@ public class GleamOptionsMenuState : IGameState
         _videoSettingsPanel.AddChild(_resolutionSelector);
 
         // Fullscreen
-        _fullscreenLabel = new GleamLabel("Fullscreen", Vector2.Zero);
+        _fullscreenLabel = new GleamLabel("Fullscreen", Vector2.Zero, new Vector2(contentWidth, 24));
         _videoSettingsPanel.AddChild(_fullscreenLabel);
 
         _fullscreenToggle = new GleamToggle(Vector2.Zero, new Vector2(100, 36), _settings.Fullscreen);
@@ -324,6 +324,7 @@ public class GleamOptionsMenuState : IGameState
     private void OnApply()
     {
         _settings.ApplyAudioSettings();
+        _settings.ApplyVideoSettings();
         _settings.Save();
         _stateManager.PopState();
     }
