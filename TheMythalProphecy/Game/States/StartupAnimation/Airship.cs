@@ -28,9 +28,14 @@ public class Airship
     private static readonly Color MagicMid = new(255, 200, 100);
     private static readonly Color MagicOuter = new(255, 180, 80);
 
-    // Wing colors
-    private static readonly Color WingColor = new(245, 245, 250);
-    private static readonly Color WingShadow = new(200, 205, 215);
+    // Da Vinci wing colors - fabric and wood frame
+    private static readonly Color FabricLight = new(235, 225, 200);      // Canvas/linen highlight
+    private static readonly Color FabricMid = new(210, 195, 165);        // Main fabric
+    private static readonly Color FabricShadow = new(175, 160, 135);     // Fabric in shadow
+    private static readonly Color FabricDark = new(145, 130, 110);       // Deep creases
+    private static readonly Color WoodFrame = new(85, 60, 35);           // Wooden ribs
+    private static readonly Color WoodLight = new(110, 80, 50);          // Wood highlights
+    private static readonly Color LeatherStrap = new(70, 45, 25);        // Binding straps
 
     public float CenterX => _screenWidth * 0.5f;
     public float CenterY => _screenHeight * 0.5f;
@@ -50,6 +55,13 @@ public class Airship
     {
         float cx = CenterX;
         float cy = CenterY;
+
+        // Gentle bobbing motion - slow primary wave with subtle secondary
+        float bobPrimary = MathF.Sin(_animationTime * 0.8f) * 3f;
+        float bobSecondary = MathF.Sin(_animationTime * 1.3f + 0.5f) * 1f;
+        float bobOffset = bobPrimary + bobSecondary;
+
+        cy += bobOffset;
 
         DrawMagicGlow(spriteBatch, renderer, cx, cy);
         DrawHull(spriteBatch, renderer, cx, cy);
@@ -82,48 +94,100 @@ public class Airship
 
     private void DrawWings(SpriteBatch spriteBatch, PrimitiveRenderer renderer, float cx, float cy)
     {
-        // Single wing on the near side (ship facing west, we see the south-facing wing)
-        // Attached to main hull body, away from captain's quarters
+        // Da Vinci style flying wing - fabric stretched over wooden frame
+        // Attached to main hull, extends downward (we see it from above/side)
         float wingX = cx - 15;
-        float wingY = cy + 20;
+        float wingY = cy + 18;
 
-        // Wing mount plate (clean attachment to hull)
-        renderer.DrawFilledEllipse(spriteBatch, new Vector2(wingX + 2, wingY + 2), 12, 8, HullDark);
-        renderer.DrawFilledEllipse(spriteBatch, new Vector2(wingX + 2, wingY), 10, 6, HullHighlight);
+        // Wing mount - heavy wooden bracket attached to hull
+        renderer.DrawFilledEllipse(spriteBatch, new Vector2(wingX + 3, wingY + 4), 14, 10, HullDark);
+        renderer.DrawFilledEllipse(spriteBatch, new Vector2(wingX + 2, wingY + 2), 12, 8, WoodFrame);
+        renderer.DrawFilledEllipse(spriteBatch, new Vector2(wingX + 1, wingY), 10, 6, WoodLight);
 
-        // Wing root attachment point
-        Vector2 root = new(wingX, wingY + 5);
+        // Main spar (primary structural beam running down the wing)
+        Vector2 sparRoot = new(wingX, wingY + 6);
+        Vector2 sparMid = new(wingX + 4, wingY + 32);
+        Vector2 sparTip = new(wingX + 8, wingY + 55);
 
-        // Wing extends down and slightly back (toward viewer)
-        Vector2 leadingRoot = new(wingX - 12, wingY);
-        Vector2 leadingMid = new(wingX - 6, wingY + 28);
-        Vector2 leadingTip = new(wingX + 6, wingY + 50);
+        // Wing frame points - ribs radiate from the spar
+        // Leading edge (front of wing)
+        Vector2 leadRoot = new(wingX - 14, wingY + 2);
+        Vector2 leadMid = new(wingX - 8, wingY + 30);
+        Vector2 leadTip = new(wingX + 2, wingY + 52);
 
-        Vector2 trailingRoot = new(wingX + 16, wingY + 6);
-        Vector2 trailingMid = new(wingX + 12, wingY + 30);
-        Vector2 trailingTip = new(wingX + 10, wingY + 48);
+        // Trailing edge (back of wing)
+        Vector2 trailRoot = new(wingX + 18, wingY + 10);
+        Vector2 trailMid = new(wingX + 16, wingY + 34);
+        Vector2 trailTip = new(wingX + 12, wingY + 54);
 
-        // Main wing surface
-        renderer.DrawTriangle(spriteBatch, leadingRoot, trailingRoot, leadingMid, WingColor);
-        renderer.DrawTriangle(spriteBatch, trailingRoot, leadingMid, trailingMid, WingColor);
-        renderer.DrawTriangle(spriteBatch, leadingMid, trailingMid, leadingTip, WingShadow);
-        renderer.DrawTriangle(spriteBatch, trailingMid, leadingTip, trailingTip, WingShadow);
+        // === FABRIC PANELS (drawn first, behind the frame) ===
 
-        // Wing spar (center structural beam)
-        Vector2 sparMid = new(wingX + 2, wingY + 28);
-        Vector2 sparTip = new(wingX + 7, wingY + 48);
-        renderer.DrawLine(spriteBatch, root, sparMid, HullDark, 3);
-        renderer.DrawLine(spriteBatch, sparMid, sparTip, HullDark, 2);
+        // Upper panel (root to mid) - catches more light
+        renderer.DrawTriangle(spriteBatch, leadRoot, sparRoot, leadMid, FabricLight);
+        renderer.DrawTriangle(spriteBatch, sparRoot, leadMid, sparMid, FabricMid);
+        renderer.DrawTriangle(spriteBatch, sparRoot, trailRoot, sparMid, FabricMid);
+        renderer.DrawTriangle(spriteBatch, trailRoot, sparMid, trailMid, FabricShadow);
 
-        // Struts
-        renderer.DrawLine(spriteBatch, new Vector2(wingX - 4, wingY + 12),
-            new Vector2(wingX + 10, wingY + 14), HullDark * 0.6f, 1);
-        renderer.DrawLine(spriteBatch, new Vector2(wingX - 1, wingY + 26),
-            new Vector2(wingX + 10, wingY + 28), HullDark * 0.6f, 1);
+        // Lower panel (mid to tip) - more shadow
+        renderer.DrawTriangle(spriteBatch, leadMid, sparMid, leadTip, FabricMid);
+        renderer.DrawTriangle(spriteBatch, sparMid, leadTip, sparTip, FabricShadow);
+        renderer.DrawTriangle(spriteBatch, sparMid, trailMid, sparTip, FabricShadow);
+        renderer.DrawTriangle(spriteBatch, trailMid, sparTip, trailTip, FabricDark);
 
-        // Magical trim on leading edge
-        renderer.DrawLine(spriteBatch, leadingRoot, leadingMid, MagicMid * 0.4f, 2);
-        renderer.DrawLine(spriteBatch, leadingMid, leadingTip, MagicMid * 0.3f, 1);
+        // Fabric tension lines (subtle creases in the canvas)
+        renderer.DrawLine(spriteBatch, new Vector2(wingX - 6, wingY + 14), new Vector2(wingX + 8, wingY + 18), FabricDark * 0.3f, 1);
+        renderer.DrawLine(spriteBatch, new Vector2(wingX - 3, wingY + 24), new Vector2(wingX + 10, wingY + 26), FabricDark * 0.25f, 1);
+        renderer.DrawLine(spriteBatch, new Vector2(wingX, wingY + 38), new Vector2(wingX + 12, wingY + 40), FabricDark * 0.2f, 1);
+
+        // === WOODEN FRAME (ribs and spars) ===
+
+        // Main spar (thick central beam)
+        renderer.DrawLine(spriteBatch, sparRoot, sparMid, WoodFrame, 4);
+        renderer.DrawLine(spriteBatch, sparMid, sparTip, WoodFrame, 3);
+        // Highlight on spar
+        renderer.DrawLine(spriteBatch, sparRoot + new Vector2(-1, 0), sparMid + new Vector2(-1, 0), WoodLight, 1);
+
+        // Leading edge rib
+        renderer.DrawLine(spriteBatch, leadRoot, leadMid, WoodFrame, 3);
+        renderer.DrawLine(spriteBatch, leadMid, leadTip, WoodFrame, 2);
+
+        // Trailing edge rib
+        renderer.DrawLine(spriteBatch, trailRoot, trailMid, WoodFrame, 3);
+        renderer.DrawLine(spriteBatch, trailMid, trailTip, WoodFrame, 2);
+
+        // Cross ribs (horizontal struts connecting the frame)
+        // Upper cross rib
+        renderer.DrawLine(spriteBatch, leadRoot, sparRoot, WoodFrame, 2);
+        renderer.DrawLine(spriteBatch, sparRoot, trailRoot, WoodFrame, 2);
+
+        // Middle cross ribs
+        Vector2 crossMidLead = new(wingX - 10, wingY + 16);
+        Vector2 crossMidSpar = new(wingX + 2, wingY + 18);
+        Vector2 crossMidTrail = new(wingX + 16, wingY + 20);
+        renderer.DrawLine(spriteBatch, crossMidLead, crossMidSpar, WoodFrame, 2);
+        renderer.DrawLine(spriteBatch, crossMidSpar, crossMidTrail, WoodFrame, 2);
+
+        // Lower cross ribs
+        renderer.DrawLine(spriteBatch, leadMid, sparMid, WoodFrame, 2);
+        renderer.DrawLine(spriteBatch, sparMid, trailMid, WoodFrame, 2);
+
+        // Tip cross rib
+        renderer.DrawLine(spriteBatch, leadTip, sparTip, WoodFrame, 1);
+        renderer.DrawLine(spriteBatch, sparTip, trailTip, WoodFrame, 1);
+
+        // === LEATHER BINDING STRAPS (at joints) ===
+        // Where ribs meet the spar
+        renderer.DrawFilledCircle(spriteBatch, sparRoot, 4, LeatherStrap);
+        renderer.DrawFilledCircle(spriteBatch, sparMid, 3, LeatherStrap);
+        renderer.DrawFilledCircle(spriteBatch, sparTip, 2, LeatherStrap);
+
+        // Cross rib joints
+        renderer.DrawFilledCircle(spriteBatch, crossMidSpar, 2, LeatherStrap);
+        renderer.DrawFilledCircle(spriteBatch, new Vector2(wingX + 2, wingY + 32), 2, LeatherStrap);
+
+        // === MAGICAL ENHANCEMENT (subtle glow on leading edge) ===
+        renderer.DrawLine(spriteBatch, leadRoot, leadMid, MagicMid * 0.25f, 2);
+        renderer.DrawLine(spriteBatch, leadMid, leadTip, MagicMid * 0.2f, 1);
     }
 
     private void DrawHull(SpriteBatch spriteBatch, PrimitiveRenderer renderer, float cx, float cy)

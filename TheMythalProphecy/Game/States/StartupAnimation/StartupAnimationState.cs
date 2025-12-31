@@ -61,7 +61,6 @@ public class StartupAnimationState : IGameState
     private FloatTween _colorTransition;
     private FloatTween _backgroundTransition;
     private FloatTween _fadeToBlackOpacity;
-    private bool _flashFadeOutStarted;
 
     // Logo reveal
     private float _logoRevealAmount;
@@ -114,7 +113,6 @@ public class StartupAnimationState : IGameState
         _totalElapsed = 0f;
         _isComplete = false;
         _previousKeyState = Keyboard.GetState();
-        _flashFadeOutStarted = false;
 
         // Clear
         _tweenEngine.Clear();
@@ -178,14 +176,7 @@ public class StartupAnimationState : IGameState
                 break;
 
             case AnimationPhase.FlashTransition:
-                // Hold flash at full opacity, then fade out smoothly
-                // Flash in takes ~0.25s, hold until 0.8s, then fade out
-                if (!_flashFadeOutStarted && _phaseElapsed >= 0.8f)
-                {
-                    _flashFadeOutStarted = true;
-                    _flashOpacity = _tweenEngine.TweenFloat(1f, 0f, 1.2f, EasingType.EaseInOutQuad);
-                }
-
+                // Hold flash at full opacity - exit starlight flash handles the transition
                 // Update sonar color transition
                 if (_colorTransition != null)
                 {
@@ -318,7 +309,7 @@ public class StartupAnimationState : IGameState
         if (_phase == AnimationPhase.FlashTransition && _flashOpacity != null)
         {
             float opacity = _flashOpacity.Current;
-            _blueVortex.Draw(spriteBatch, _renderer, _phaseElapsed, opacity);
+            _blueVortex.Draw(spriteBatch, _renderer, _phaseElapsed, opacity, StartupAnimationConfig.FlashDuration);
         }
 
         // Draw fade to black overlay
@@ -366,9 +357,8 @@ public class StartupAnimationState : IGameState
         _phase = AnimationPhase.FlashTransition;
         _phaseElapsed = 0f;
         _tweenEngine.Clear();
-        _flashFadeOutStarted = false;
 
-        // Quick but smooth fade in
+        // Quick but smooth fade in, then hold at full opacity
         _flashOpacity = _tweenEngine.TweenFloat(0f, 1f, 0.25f, EasingType.EaseOutQuad);
 
         // Transition sonar color from green to purple
