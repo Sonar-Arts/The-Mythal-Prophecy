@@ -29,14 +29,20 @@ public class SonarSystem
         _colorTransition = 0f;
     }
 
-    public void Update(float deltaTime)
+    /// <summary>
+    /// Updates ring animations. Set useInternalSpawning to false to control spawning externally.
+    /// </summary>
+    public void Update(float deltaTime, bool useInternalSpawning = true)
     {
-        // Spawn new rings
-        _spawnTimer += deltaTime;
-        if (_spawnTimer >= StartupAnimationConfig.SonarSpawnInterval)
+        // Spawn new rings (can be disabled for external control)
+        if (useInternalSpawning)
         {
-            _spawnTimer = 0f;
-            SpawnRing();
+            _spawnTimer += deltaTime;
+            if (_spawnTimer >= StartupAnimationConfig.SonarSpawnInterval)
+            {
+                _spawnTimer = 0f;
+                SpawnRing();
+            }
         }
 
         // Update existing rings
@@ -52,7 +58,10 @@ public class SonarSystem
         }
     }
 
-    private void SpawnRing()
+    /// <summary>
+    /// Manually spawn a sonar ring. Use this for syncing with audio.
+    /// </summary>
+    public void SpawnRing()
     {
         var ring = new SonarRing(
             Center,

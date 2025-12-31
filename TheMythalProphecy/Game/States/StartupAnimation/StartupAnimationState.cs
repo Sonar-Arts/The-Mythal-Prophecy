@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Input;
 using TheMythalProphecy.Game.Core;
 using TheMythalProphecy.Game.Systems.Animation;
+using TheMythalProphecy.Tools;
 
 namespace TheMythalProphecy.Game.States.StartupAnimation;
 
@@ -69,6 +71,19 @@ public class StartupAnimationState : IGameState
     private int _screenWidth;
     private int _screenHeight;
 
+    // Audio
+    private SoundEffect _sonarSound;
+    private SoundEffect _underwaterAmbient;
+    private SoundEffect _teleportSound;
+    private SoundEffect _seaVortexSound;
+    private SoundEffect _fantasyIntroSound;
+    private SoundEffectInstance _underwaterInstance;
+    private SoundEffectInstance _seaVortexInstance;
+    private SoundEffectInstance _fantasyIntroInstance;
+    private float _sonarSpawnTimer;
+    private bool _audioLoaded;
+    private bool _endFlashSoundPlayed;
+
     public StartupAnimationState(ContentManager content, GameStateManager stateManager)
     {
         _content = content;
@@ -124,10 +139,121 @@ public class StartupAnimationState : IGameState
         {
             SpawnBubble(true);
         }
+
+        // Load and play startup audio
+        LoadAndPlayStartupAudio();
+    }
+
+    private void LoadAndPlayStartupAudio()
+    {
+        try
+        {
+            // Generate procedural audio files if they don't exist
+            var contentPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Content");
+            var sonarPath = Path.Combine(contentPath, "Audio", "SFX", "StartupSonar.wav");
+
+            if (!File.Exists(sonarPath))
+            {
+                AudioGenerator.GenerateStartupAudio(contentPath);
+            }
+
+            // Load procedural audio
+            var underwaterPath = Path.Combine(contentPath, "Audio", "SFX", "UnderwaterAmbient.wav");
+
+            using (var sonarStream = File.OpenRead(sonarPath))
+            {
+                _sonarSound = SoundEffect.FromStream(sonarStream);
+            }
+
+            using (var underwaterStream = File.OpenRead(underwaterPath))
+            {
+                _underwaterAmbient = SoundEffect.FromStream(underwaterStream);
+            }
+
+            // Load intro audio from Resources folder (4 levels up from bin/Debug/net9.0)
+            var resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Resources", "Audio", "Intro");
+
+            var tportPath = Path.Combine(resourcesPath, "TPort.wav");
+            if (File.Exists(tportPath))
+            {
+                using var stream = File.OpenRead(tportPath);
+                _teleportSound = SoundEffect.FromStream(stream);
+            }
+
+            var seaVortexPath = Path.Combine(resourcesPath, "SeaVortex.wav");
+            if (File.Exists(seaVortexPath))
+            {
+                using var stream = File.OpenRead(seaVortexPath);
+                _seaVortexSound = SoundEffect.FromStream(stream);
+            }
+
+            var fantasyPath = Path.Combine(resourcesPath, "FantasyIntroTemp.wav");
+            if (File.Exists(fantasyPath))
+            {
+                using var stream = File.OpenRead(fantasyPath);
+                _fantasyIntroSound = SoundEffect.FromStream(stream);
+            }
+
+            // Create looping underwater ambient
+            _underwaterInstance = _underwaterAmbient.CreateInstance();
+            _underwaterInstance.IsLooped = true;
+            _underwaterInstance.Volume = 0.5f;
+            _underwaterInstance.Play();
+
+            _audioLoaded = true;
+
+            // Spawn first ring immediately with sound
+            SpawnSonarRingWithSound();
+        }
+        catch (Exception)
+        {
+            // Audio generation or loading failed - continue without audio
+            _sonarSound = null;
+            _underwaterAmbient = null;
+            _underwaterInstance = null;
+            _audioLoaded = false;
+        }
+    }
+
+    private void SpawnSonarRingWithSound()
+    {
+        // Spawn the visual ring
+        _sonarSystem.SpawnRing();
+
+        // Play the ping sound (non-looped, one-shot)
+        if (_audioLoaded && _sonarSound != null)
+        {
+            _sonarSound.Play(0.5f, 0f, 0f);
+        }
+    }
+
+    private void StopStartupAudio()
+    {
+        _underwaterInstance?.Stop();
+        _audioLoaded = false;
+    }
+
+    private void StopAllAudio()
+    {
+        _underwaterInstance?.Stop();
+        _seaVortexInstance?.Stop();
+        _fantasyIntroInstance?.Stop();
+        _audioLoaded = false;
     }
 
     public void Exit()
     {
+        // Stop and dispose audio
+        StopAllAudio();
+        _underwaterInstance?.Dispose();
+        _seaVortexInstance?.Dispose();
+        _fantasyIntroInstance?.Dispose();
+        _sonarSound?.Dispose();
+        _underwaterAmbient?.Dispose();
+        _teleportSound?.Dispose();
+        _seaVortexSound?.Dispose();
+        _fantasyIntroSound?.Dispose();
+
         _renderer?.Dispose();
         _retroLogoTexture?.Dispose();
         _fantasyLogoTexture?.Dispose();
@@ -159,13 +285,21 @@ public class StartupAnimationState : IGameState
         // Update tweens
         _tweenEngine.Update(gameTime);
 
-        // Always update sonar system
-        _sonarSystem.Update(deltaTime);
-
         // Update phase-specific logic
         switch (_phase)
         {
             case AnimationPhase.SubmarineWithSonar:
+                // Update sonar with external spawn control (synced with audio)
+                _sonarSystem.Update(deltaTime, useInternalSpawning: false);
+
+                // Spawn sonar rings synced with audio pings
+                _sonarSpawnTimer += deltaTime;
+                if (_sonarSpawnTimer >= StartupAnimationConfig.SonarSpawnInterval)
+                {
+                    _sonarSpawnTimer = 0f;
+                    SpawnSonarRingWithSound();
+                }
+
                 // Spawn bubbles
                 if (Random.Shared.NextSingle() < 0.15f)
                 {
@@ -176,11 +310,21 @@ public class StartupAnimationState : IGameState
                 break;
 
             case AnimationPhase.FlashTransition:
-                // Hold flash at full opacity - exit starlight flash handles the transition
+                // Update sonar (internal spawning resumes)
+                _sonarSystem.Update(deltaTime);
+
                 // Update sonar color transition
                 if (_colorTransition != null)
                 {
                     _sonarSystem.SetColorTransition(_colorTransition.Current);
+                }
+
+                // Play 2nd teleport sound at end flash (0.35s before phase ends)
+                float endFlashStart = StartupAnimationConfig.FlashDuration - 0.35f;
+                if (!_endFlashSoundPlayed && _phaseElapsed >= endFlashStart)
+                {
+                    _teleportSound?.Play(0.7f, 0f, 0f);
+                    _endFlashSoundPlayed = true;
                 }
 
                 // Spawn clouds during flash so they're ready
@@ -191,6 +335,7 @@ public class StartupAnimationState : IGameState
                 break;
 
             case AnimationPhase.AirshipWithSonar:
+                _sonarSystem.Update(deltaTime);
                 _airship.Update(_totalElapsed);
                 UpdateCloudsAndBirds(deltaTime);
                 if (_phaseElapsed >= StartupAnimationConfig.AirshipDuration)
@@ -198,6 +343,7 @@ public class StartupAnimationState : IGameState
                 break;
 
             case AnimationPhase.TextReveal:
+                _sonarSystem.Update(deltaTime);
                 _airship.Update(_totalElapsed);
                 UpdateCloudsAndBirds(deltaTime);
                 if (_phaseElapsed >= StartupAnimationConfig.TextRevealDuration)
@@ -205,6 +351,7 @@ public class StartupAnimationState : IGameState
                 break;
 
             case AnimationPhase.Hold:
+                _sonarSystem.Update(deltaTime);
                 _airship.Update(_totalElapsed);
                 UpdateCloudsAndBirds(deltaTime);
                 if (_phaseElapsed >= StartupAnimationConfig.HoldDuration)
@@ -214,8 +361,17 @@ public class StartupAnimationState : IGameState
                 break;
 
             case AnimationPhase.FadeToBlack:
+                _sonarSystem.Update(deltaTime);
                 _airship.Update(_totalElapsed);
                 UpdateCloudsAndBirds(deltaTime);
+
+                // Fade out fantasy intro audio with the visual fade
+                if (_fantasyIntroInstance != null)
+                {
+                    float fadeProgress = _phaseElapsed / StartupAnimationConfig.FadeOutDuration;
+                    _fantasyIntroInstance.Volume = MathHelper.Clamp(0.6f * (1f - fadeProgress), 0f, 0.6f);
+                }
+
                 if (_phaseElapsed >= StartupAnimationConfig.FadeOutDuration)
                 {
                     _phase = AnimationPhase.Complete;
@@ -344,6 +500,7 @@ public class StartupAnimationState : IGameState
 
         if (skipPressed)
         {
+            StopAllAudio();
             _isComplete = true;
         }
 
@@ -354,6 +511,20 @@ public class StartupAnimationState : IGameState
 
     private void StartFlashPhase()
     {
+        // Stop underwater/sonar audio when the star blink occurs
+        StopStartupAudio();
+
+        // Play teleport sound on flash
+        _teleportSound?.Play(0.7f, 0f, 0f);
+
+        // Play sea vortex during the vortex animation
+        if (_seaVortexSound != null)
+        {
+            _seaVortexInstance = _seaVortexSound.CreateInstance();
+            _seaVortexInstance.Volume = 0.6f;
+            _seaVortexInstance.Play();
+        }
+
         _phase = AnimationPhase.FlashTransition;
         _phaseElapsed = 0f;
         _tweenEngine.Clear();
@@ -384,6 +555,17 @@ public class StartupAnimationState : IGameState
 
     private void StartAirshipPhase()
     {
+        // Stop sea vortex sound
+        _seaVortexInstance?.Stop();
+
+        // Play fantasy intro music
+        if (_fantasyIntroSound != null)
+        {
+            _fantasyIntroInstance = _fantasyIntroSound.CreateInstance();
+            _fantasyIntroInstance.Volume = 0.6f;
+            _fantasyIntroInstance.Play();
+        }
+
         _phase = AnimationPhase.AirshipWithSonar;
         _phaseElapsed = 0f;
         _bubbles.Clear();
