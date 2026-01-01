@@ -325,7 +325,7 @@ public class gOptionsMenuScreen : IGameState
         _testsSettingsPanel = new GleamPanel(Vector2.Zero, new Vector2(width, 300))
         {
             Layout = GleamLayout.Vertical,
-            Spacing = 16,
+            Spacing = 12,
             Padding = 16,
             DrawBackground = false,
             DrawBorder = false
@@ -339,21 +339,29 @@ public class gOptionsMenuScreen : IGameState
         };
         _testsSettingsPanel.AddChild(headerLabel);
 
-        // Description
-        var descLabel = new GleamLabel("Test 3D rendering capabilities", Vector2.Zero, new Vector2(contentWidth, 20))
+        // Button container for horizontal layout
+        var buttonPanel = new GleamPanel(Vector2.Zero, new Vector2(contentWidth, 50))
         {
-            TextColor = new Color(180, 180, 180),
-            Scale = 0.8f
+            Layout = GleamLayout.Horizontal,
+            Spacing = 12,
+            DrawBackground = false,
+            DrawBorder = false
         };
-        _testsSettingsPanel.AddChild(descLabel);
 
-        // Icosahedron test button - wider to fit text in parallelogram
-        var icosahedronButton = new GleamButton("Icosahedron", Vector2.Zero, new Vector2(180, 45));
+        // Icosahedron test button
+        var icosahedronButton = new GleamButton("Icosahedron", Vector2.Zero, new Vector2(150, 42));
         icosahedronButton.OnClick += _ => LaunchIcosahedronTest();
-        _testsSettingsPanel.AddChild(icosahedronButton);
+        buttonPanel.AddChild(icosahedronButton);
+
+        // D20 test button
+        var d20Button = new GleamButton("D20 Dice", Vector2.Zero, new Vector2(130, 42));
+        d20Button.OnClick += _ => LaunchD20Test();
+        buttonPanel.AddChild(d20Button);
+
+        _testsSettingsPanel.AddChild(buttonPanel);
 
         // Instructions
-        var instructionsLabel = new GleamLabel("Orbit camera with mouse drag", Vector2.Zero, new Vector2(contentWidth, 20))
+        var instructionsLabel = new GleamLabel("Click to select a 3D test", Vector2.Zero, new Vector2(contentWidth, 20))
         {
             TextColor = new Color(140, 140, 140),
             Scale = 0.75f
@@ -364,6 +372,11 @@ public class gOptionsMenuScreen : IGameState
     private void LaunchIcosahedronTest()
     {
         _stateManager.PushState(new IcosahedronTestState(_content, _stateManager));
+    }
+
+    private void LaunchD20Test()
+    {
+        _stateManager.PushState(new D20TestState(_content, _stateManager));
     }
 
     private void SelectCategory(int index)
