@@ -358,6 +358,11 @@ public class gOptionsMenuScreen : IGameState
         d20Button.OnClick += _ => LaunchD20Test();
         buttonPanel.AddChild(d20Button);
 
+        // D12 test button
+        var d12Button = new GleamButton("D12 Dice", Vector2.Zero, new Vector2(130, 42));
+        d12Button.OnClick += _ => LaunchD12Test();
+        buttonPanel.AddChild(d12Button);
+
         _testsSettingsPanel.AddChild(buttonPanel);
 
         // Instructions
@@ -377,6 +382,11 @@ public class gOptionsMenuScreen : IGameState
     private void LaunchD20Test()
     {
         _stateManager.PushState(new D20TestState(_content, _stateManager));
+    }
+
+    private void LaunchD12Test()
+    {
+        _stateManager.PushState(new D12TestState(_content, _stateManager));
     }
 
     private void SelectCategory(int index)
