@@ -321,6 +321,8 @@ public class gOptionsMenuScreen : IGameState
     private void CreateTestsSettings(int width)
     {
         int contentWidth = width - 32;
+        int buttonWidth = (contentWidth - 12) / 2; // Two buttons per row with spacing
+        int buttonHeight = 42;
 
         _testsSettingsPanel = new GleamPanel(Vector2.Zero, new Vector2(width, 300))
         {
@@ -339,8 +341,8 @@ public class gOptionsMenuScreen : IGameState
         };
         _testsSettingsPanel.AddChild(headerLabel);
 
-        // Button container for horizontal layout
-        var buttonPanel = new GleamPanel(Vector2.Zero, new Vector2(contentWidth, 50))
+        // Row 1: Icosahedron, D20
+        var row1 = new GleamPanel(Vector2.Zero, new Vector2(contentWidth, buttonHeight))
         {
             Layout = GleamLayout.Horizontal,
             Spacing = 12,
@@ -348,25 +350,75 @@ public class gOptionsMenuScreen : IGameState
             DrawBorder = false
         };
 
-        // Icosahedron test button
-        var icosahedronButton = new GleamButton("Icosahedron", Vector2.Zero, new Vector2(150, 42));
+        var icosahedronButton = new GleamButton("Icosahedron", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
         icosahedronButton.OnClick += _ => LaunchIcosahedronTest();
-        buttonPanel.AddChild(icosahedronButton);
+        row1.AddChild(icosahedronButton);
 
-        // D20 test button
-        var d20Button = new GleamButton("D20 Dice", Vector2.Zero, new Vector2(130, 42));
+        var d20Button = new GleamButton("D20 Dice", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
         d20Button.OnClick += _ => LaunchD20Test();
-        buttonPanel.AddChild(d20Button);
+        row1.AddChild(d20Button);
 
-        // D12 test button
-        var d12Button = new GleamButton("D12 Dice", Vector2.Zero, new Vector2(130, 42));
+        _testsSettingsPanel.AddChild(row1);
+
+        // Row 2: D12, D10
+        var row2 = new GleamPanel(Vector2.Zero, new Vector2(contentWidth, buttonHeight))
+        {
+            Layout = GleamLayout.Horizontal,
+            Spacing = 12,
+            DrawBackground = false,
+            DrawBorder = false
+        };
+
+        var d12Button = new GleamButton("D12 Dice", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
         d12Button.OnClick += _ => LaunchD12Test();
-        buttonPanel.AddChild(d12Button);
+        row2.AddChild(d12Button);
 
-        _testsSettingsPanel.AddChild(buttonPanel);
+        var d10Button = new GleamButton("D10 Dice", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        d10Button.OnClick += _ => LaunchD10Test();
+        row2.AddChild(d10Button);
+
+        _testsSettingsPanel.AddChild(row2);
+
+        // Row 3: D8, D6
+        var row3 = new GleamPanel(Vector2.Zero, new Vector2(contentWidth, buttonHeight))
+        {
+            Layout = GleamLayout.Horizontal,
+            Spacing = 12,
+            DrawBackground = false,
+            DrawBorder = false
+        };
+
+        var d8Button = new GleamButton("D8 Dice", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        d8Button.OnClick += _ => LaunchD8Test();
+        row3.AddChild(d8Button);
+
+        var d6Button = new GleamButton("D6 Dice", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        d6Button.OnClick += _ => LaunchD6Test();
+        row3.AddChild(d6Button);
+
+        _testsSettingsPanel.AddChild(row3);
+
+        // Row 4: D4, D2
+        var row4 = new GleamPanel(Vector2.Zero, new Vector2(contentWidth, buttonHeight))
+        {
+            Layout = GleamLayout.Horizontal,
+            Spacing = 12,
+            DrawBackground = false,
+            DrawBorder = false
+        };
+
+        var d4Button = new GleamButton("D4 Dice", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        d4Button.OnClick += _ => LaunchD4Test();
+        row4.AddChild(d4Button);
+
+        var d2Button = new GleamButton("Coin Flip", Vector2.Zero, new Vector2(buttonWidth, buttonHeight));
+        d2Button.OnClick += _ => LaunchD2Test();
+        row4.AddChild(d2Button);
+
+        _testsSettingsPanel.AddChild(row4);
 
         // Instructions
-        var instructionsLabel = new GleamLabel("Click to select a 3D test", Vector2.Zero, new Vector2(contentWidth, 20))
+        var instructionsLabel = new GleamLabel("Click to launch a 3D rendering test", Vector2.Zero, new Vector2(contentWidth, 20))
         {
             TextColor = new Color(140, 140, 140),
             Scale = 0.75f
@@ -387,6 +439,31 @@ public class gOptionsMenuScreen : IGameState
     private void LaunchD12Test()
     {
         _stateManager.PushState(new D12TestState(_content, _stateManager));
+    }
+
+    private void LaunchD10Test()
+    {
+        _stateManager.PushState(new D10TestState(_content, _stateManager));
+    }
+
+    private void LaunchD8Test()
+    {
+        _stateManager.PushState(new D8TestState(_content, _stateManager));
+    }
+
+    private void LaunchD6Test()
+    {
+        _stateManager.PushState(new D6TestState(_content, _stateManager));
+    }
+
+    private void LaunchD4Test()
+    {
+        _stateManager.PushState(new D4TestState(_content, _stateManager));
+    }
+
+    private void LaunchD2Test()
+    {
+        _stateManager.PushState(new D2TestState(_content, _stateManager));
     }
 
     private void SelectCategory(int index)
