@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using static TheMythalProphecy.Game.States.StartupAnimation.StartupAnimationConfig;
 
 namespace TheMythalProphecy.Game.States.StartupAnimation;
 
@@ -43,7 +44,7 @@ public class Cloud
     private static readonly Color CloudDark = new(140, 160, 195);
     private static readonly Color CloudAmbient = new(210, 220, 240);
 
-    public bool IsExpired => _x > _screenWidth + 300 * _scale;
+    public bool IsExpired => _x > _screenWidth + S(300) * _scale;
 
     public Cloud(int screenWidth, int screenHeight, bool randomX = false)
     {
@@ -63,8 +64,8 @@ public class Cloud
         };
         _variation = Random.Shared.Next(3);
 
-        // Start position
-        float extraWidth = _type == CloudType.Stratus ? 400 : 200;
+        // Start position (scaled)
+        float extraWidth = _type == CloudType.Stratus ? S(400) : S(200);
         _x = randomX ? Random.Shared.NextSingle() * (screenWidth + extraWidth * 2) - extraWidth : -extraWidth;
 
         // Y position based on cloud type
@@ -86,18 +87,18 @@ public class Cloud
         };
         _y = Random.Shared.NextSingle() * screenHeight * yRange + screenHeight * yOffset;
 
-        // Speed based on type
+        // Speed based on type (scaled)
         float baseSpeed = _type switch
         {
-            CloudType.Cirrus => 15f,
-            CloudType.Stratus => 20f,
-            CloudType.Cumulonimbus => 28f,
-            CloudType.Altocumulus => 35f,
-            _ => 25f
+            CloudType.Cirrus => S(15f),
+            CloudType.Stratus => S(20f),
+            CloudType.Cumulonimbus => S(28f),
+            CloudType.Altocumulus => S(35f),
+            _ => S(25f)
         };
-        _speed = baseSpeed + Random.Shared.NextSingle() * 20f;
+        _speed = baseSpeed + Random.Shared.NextSingle() * S(20f);
 
-        // Scale based on type
+        // Scale based on type (this multiplies the base size)
         float baseScale = _type switch
         {
             CloudType.Cirrus => 1.0f,
@@ -110,7 +111,7 @@ public class Cloud
 
         // Alpha based on depth
         float minAlpha = _type == CloudType.Cirrus ? 0.25f : 0.45f;
-        _alpha = minAlpha + (_speed - 15f) / 40f * 0.35f;
+        _alpha = minAlpha + (_speed - S(15f)) / S(40f) * 0.35f;
     }
 
     public void Update(float deltaTime)
@@ -143,7 +144,7 @@ public class Cloud
 
     private void DrawCumulusCloud(SpriteBatch spriteBatch, PrimitiveRenderer renderer)
     {
-        float sz = 70 * _scale;
+        float sz = S(70) * _scale;
         float breathe = MathF.Sin(_time * 0.4f + _seed) * 0.015f;
         float s = sz * (1f + breathe);
 
@@ -197,7 +198,7 @@ public class Cloud
 
     private void DrawCirrusCloud(SpriteBatch spriteBatch, PrimitiveRenderer renderer)
     {
-        float sz = 120 * _scale;
+        float sz = S(120) * _scale;
         float wave = MathF.Sin(_time * 0.2f + _seed) * 0.02f;
 
         // Wispy streaks with soft edges
@@ -240,7 +241,7 @@ public class Cloud
 
     private void DrawStratusCloud(SpriteBatch spriteBatch, PrimitiveRenderer renderer)
     {
-        float sz = 100 * _scale;
+        float sz = S(100) * _scale;
         float pulse = MathF.Sin(_time * 0.25f + _seed) * 0.01f;
         float s = sz * (1f + pulse);
 
@@ -287,7 +288,7 @@ public class Cloud
 
     private void DrawCumulonimbusCloud(SpriteBatch spriteBatch, PrimitiveRenderer renderer)
     {
-        float sz = 80 * _scale;
+        float sz = S(80) * _scale;
         float sway = MathF.Sin(_time * 0.3f + _seed) * 0.02f;
         float s = sz * (1f + sway);
 
@@ -335,8 +336,8 @@ public class Cloud
 
     private void DrawAltocumulusCloud(SpriteBatch spriteBatch, PrimitiveRenderer renderer)
     {
-        float sz = 35 * _scale;
-        float bob = MathF.Sin(_time * 0.5f + _seed) * 2f;
+        float sz = S(35) * _scale;
+        float bob = MathF.Sin(_time * 0.5f + _seed) * S(2f);
 
         // Small fluffy puff with nice shading
 

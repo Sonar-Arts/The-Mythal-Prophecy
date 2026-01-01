@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using static TheMythalProphecy.Game.States.StartupAnimation.StartupAnimationConfig;
 
 namespace TheMythalProphecy.Game.States.StartupAnimation;
 
@@ -45,15 +46,15 @@ public class BackgroundRenderer
 
             if (t < 0.4f)
             {
-                color = Color.Lerp(StartupAnimationConfig.OceanDeep, StartupAnimationConfig.OceanMid, t / 0.4f);
+                color = Color.Lerp(OceanDeep, OceanMid, t / 0.4f);
             }
             else
             {
-                color = Color.Lerp(StartupAnimationConfig.OceanMid, StartupAnimationConfig.OceanSurface, (t - 0.4f) / 0.6f);
+                color = Color.Lerp(OceanMid, OceanSurface, (t - 0.4f) / 0.6f);
             }
 
-            // Add subtle wave animation
-            float wave = MathF.Sin(totalElapsed * 0.5f + i * 0.1f) * 3;
+            // Add subtle wave animation (scaled)
+            float wave = MathF.Sin(totalElapsed * 0.5f + i * 0.1f) * S(3);
             int y = i * bandHeight + (int)wave;
 
             renderer.DrawRectangle(spriteBatch, new Rectangle(0, y, _screenWidth, bandHeight + 2), color);
@@ -68,16 +69,16 @@ public class BackgroundRenderer
         for (int i = 0; i < 5; i++)
         {
             float x = (_screenWidth * 0.1f) + i * (_screenWidth * 0.2f);
-            float wave = MathF.Sin(totalElapsed * 0.3f + i * 1.5f) * 30;
+            float wave = MathF.Sin(totalElapsed * 0.3f + i * 1.5f) * S(30);
             x += wave;
 
             float opacity = 0.03f + MathF.Sin(totalElapsed * 0.5f + i) * 0.02f;
 
-            // Draw subtle light rays
-            for (int j = 0; j < _screenHeight; j += 4)
+            // Draw subtle light rays (scaled)
+            for (int j = 0; j < _screenHeight; j += Si(4))
             {
-                float rayWidth = 20 + MathF.Sin(j * 0.01f + totalElapsed) * 10;
-                var rect = new Rectangle((int)(x - rayWidth / 2), j, (int)rayWidth, 4);
+                float rayWidth = S(20) + MathF.Sin(j * 0.01f + totalElapsed) * S(10);
+                var rect = new Rectangle((int)(x - rayWidth / 2), j, (int)rayWidth, Si(4));
                 renderer.DrawRectangle(spriteBatch, rect, Color.White * opacity);
             }
         }
@@ -95,22 +96,22 @@ public class BackgroundRenderer
 
             if (t < 0.3f)
             {
-                skyColor = Color.Lerp(StartupAnimationConfig.SkyTop, StartupAnimationConfig.SkyMid, t / 0.3f);
+                skyColor = Color.Lerp(SkyTop, SkyMid, t / 0.3f);
             }
             else
             {
-                skyColor = Color.Lerp(StartupAnimationConfig.SkyMid, StartupAnimationConfig.SkyBottom, (t - 0.3f) / 0.7f);
+                skyColor = Color.Lerp(SkyMid, SkyBottom, (t - 0.3f) / 0.7f);
             }
 
             // Blend from ocean to sky
             Color oceanColor;
             if (t < 0.4f)
             {
-                oceanColor = Color.Lerp(StartupAnimationConfig.OceanDeep, StartupAnimationConfig.OceanMid, t / 0.4f);
+                oceanColor = Color.Lerp(OceanDeep, OceanMid, t / 0.4f);
             }
             else
             {
-                oceanColor = Color.Lerp(StartupAnimationConfig.OceanMid, StartupAnimationConfig.OceanSurface, (t - 0.4f) / 0.6f);
+                oceanColor = Color.Lerp(OceanMid, OceanSurface, (t - 0.4f) / 0.6f);
             }
 
             Color finalColor = Color.Lerp(oceanColor, skyColor, transition);
@@ -141,21 +142,21 @@ public class BackgroundRenderer
         float centerX = _screenWidth * 0.65f;
         float centerY = _screenHeight * 0.28f;
 
-        // Slow orbital motion
+        // Slow orbital motion (scaled orbit radius)
         float orbitAngle = totalElapsed * 0.05f;
-        float orbitRadius = 45f;
+        float orbitRadius = S(45f);
 
-        // Primary sun - larger
+        // Primary sun - larger (scaled)
         float sun1X = centerX + MathF.Cos(orbitAngle) * orbitRadius;
         float sun1Y = centerY + MathF.Sin(orbitAngle) * orbitRadius * 0.4f;
-        float sun1Radius = 30f;
+        float sun1Radius = S(30f);
 
         DrawSun(spriteBatch, renderer, sun1X, sun1Y, sun1Radius, opacity);
 
-        // Secondary sun - smaller, opposite side of orbit
+        // Secondary sun - smaller, opposite side of orbit (scaled)
         float sun2X = centerX + MathF.Cos(orbitAngle + MathF.PI) * orbitRadius;
         float sun2Y = centerY + MathF.Sin(orbitAngle + MathF.PI) * orbitRadius * 0.4f;
-        float sun2Radius = 20f;
+        float sun2Radius = S(20f);
 
         DrawSun(spriteBatch, renderer, sun2X, sun2Y, sun2Radius, opacity * 0.85f);
     }
@@ -197,7 +198,7 @@ public class BackgroundRenderer
         // Beautiful layered cloudscape with multiple depth layers
         // Creates a rich, volumetric sky scene
 
-        float drift = totalElapsed * 2f;
+        float drift = totalElapsed * S(2f);
 
         // Layer 1: Distant hazy clouds (furthest back, most transparent)
         DrawDistantCloudLayer(spriteBatch, renderer, drift * 0.2f, opacity * 0.25f);
@@ -214,10 +215,10 @@ public class BackgroundRenderer
 
     private void DrawDistantCloudLayer(SpriteBatch spriteBatch, PrimitiveRenderer renderer, float drift, float opacity)
     {
-        // Very large, soft, hazy clouds in the distance
+        // Very large, soft, hazy clouds in the distance (scaled)
         float[] cloudXPositions = { 0.1f, 0.35f, 0.6f, 0.85f };
         float[] cloudYPositions = { 0.55f, 0.62f, 0.58f, 0.65f };
-        float[] cloudSizes = { 280, 320, 260, 300 };
+        float[] cloudSizes = { S(280), S(320), S(260), S(300) };
 
         for (int i = 0; i < cloudXPositions.Length; i++)
         {
@@ -237,18 +238,18 @@ public class BackgroundRenderer
 
     private void DrawMidLayerClouds(SpriteBatch spriteBatch, PrimitiveRenderer renderer, float drift, float opacity, float time)
     {
-        // Medium-distance cumulus clouds with more definition
+        // Medium-distance cumulus clouds with more definition (scaled)
         DrawVolumCloud(spriteBatch, renderer,
             ((_screenWidth * 0.15f + drift * 0.5f) % (_screenWidth * 1.5f)) - _screenWidth * 0.25f,
-            _screenHeight * 0.42f, 180, opacity, time, 0);
+            _screenHeight * 0.42f, S(180), opacity, time, 0);
 
         DrawVolumCloud(spriteBatch, renderer,
             ((_screenWidth * 0.5f + drift * 0.4f) % (_screenWidth * 1.5f)) - _screenWidth * 0.25f,
-            _screenHeight * 0.48f, 220, opacity * 0.9f, time, 1);
+            _screenHeight * 0.48f, S(220), opacity * 0.9f, time, 1);
 
         DrawVolumCloud(spriteBatch, renderer,
             ((_screenWidth * 0.8f + drift * 0.45f) % (_screenWidth * 1.5f)) - _screenWidth * 0.25f,
-            _screenHeight * 0.38f, 160, opacity * 0.85f, time, 2);
+            _screenHeight * 0.38f, S(160), opacity * 0.85f, time, 2);
     }
 
     private void DrawVolumCloud(SpriteBatch spriteBatch, PrimitiveRenderer renderer,
@@ -310,22 +311,22 @@ public class BackgroundRenderer
 
     private void DrawDetailedClouds(SpriteBatch spriteBatch, PrimitiveRenderer renderer, float drift, float opacity, float time)
     {
-        // Closer clouds with more detail and definition
+        // Closer clouds with more detail and definition (scaled)
         DrawHighDefCloud(spriteBatch, renderer,
             ((_screenWidth * 0.25f + drift * 0.6f) % (_screenWidth * 1.6f)) - _screenWidth * 0.3f,
-            _screenHeight * 0.28f, 140, opacity, time, 0);
+            _screenHeight * 0.28f, S(140), opacity, time, 0);
 
         DrawHighDefCloud(spriteBatch, renderer,
             ((_screenWidth * 0.65f + drift * 0.55f) % (_screenWidth * 1.6f)) - _screenWidth * 0.3f,
-            _screenHeight * 0.22f, 170, opacity * 0.95f, time, 1);
+            _screenHeight * 0.22f, S(170), opacity * 0.95f, time, 1);
 
         DrawHighDefCloud(spriteBatch, renderer,
             ((_screenWidth * 0.05f + drift * 0.65f) % (_screenWidth * 1.6f)) - _screenWidth * 0.3f,
-            _screenHeight * 0.35f, 120, opacity * 0.9f, time, 2);
+            _screenHeight * 0.35f, S(120), opacity * 0.9f, time, 2);
 
         DrawHighDefCloud(spriteBatch, renderer,
             ((_screenWidth * 0.9f + drift * 0.5f) % (_screenWidth * 1.6f)) - _screenWidth * 0.3f,
-            _screenHeight * 0.3f, 150, opacity * 0.85f, time, 3);
+            _screenHeight * 0.3f, S(150), opacity * 0.85f, time, 3);
     }
 
     private void DrawHighDefCloud(SpriteBatch spriteBatch, PrimitiveRenderer renderer,
@@ -395,7 +396,7 @@ public class BackgroundRenderer
 
     private void DrawForegroundWisps(SpriteBatch spriteBatch, PrimitiveRenderer renderer, float drift, float opacity, float time)
     {
-        // Thin wispy clouds in the foreground for depth
+        // Thin wispy clouds in the foreground for depth (scaled)
         float[] wispXs = { 0.1f, 0.3f, 0.55f, 0.75f, 0.95f };
 
         for (int i = 0; i < wispXs.Length; i++)
@@ -403,8 +404,8 @@ public class BackgroundRenderer
             float x = ((_screenWidth * wispXs[i] + drift * (0.7f + i * 0.1f)) % (_screenWidth * 1.3f)) - _screenWidth * 0.15f;
             float y = _screenHeight * (0.15f + (i % 3) * 0.08f);
 
-            float wispWidth = 100 + (i % 3) * 40;
-            float wispHeight = 12 + (i % 2) * 6;
+            float wispWidth = S(100) + (i % 3) * S(40);
+            float wispHeight = S(12) + (i % 2) * S(6);
 
             // Soft wisp
             renderer.DrawFilledEllipse(spriteBatch,
@@ -419,14 +420,14 @@ public class BackgroundRenderer
                 CloudBright * (opacity * 0.3f));
         }
 
-        // Add some tiny floating puffs
+        // Add some tiny floating puffs (scaled)
         for (int i = 0; i < 6; i++)
         {
             float x = ((_screenWidth * (0.08f + i * 0.17f) + drift * (0.9f + i * 0.05f)) % (_screenWidth * 1.2f)) - _screenWidth * 0.1f;
             float y = _screenHeight * (0.08f + (i % 4) * 0.06f);
-            float puffSize = 15 + (i % 3) * 10;
+            float puffSize = S(15) + (i % 3) * S(10);
 
-            float wobble = MathF.Sin(time * 0.5f + i * 1.2f) * 3f;
+            float wobble = MathF.Sin(time * 0.5f + i * 1.2f) * S(3f);
 
             renderer.DrawFilledEllipse(spriteBatch,
                 new Vector2(x, y + wobble),

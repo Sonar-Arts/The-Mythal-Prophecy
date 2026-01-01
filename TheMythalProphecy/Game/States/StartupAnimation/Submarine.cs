@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using static TheMythalProphecy.Game.States.StartupAnimation.StartupAnimationConfig;
 
 namespace TheMythalProphecy.Game.States.StartupAnimation;
 
@@ -25,47 +26,47 @@ public class Submarine
         float centerX = CenterX;
         float centerY = CenterY;
 
-        // Hull dimensions
-        float hullWidth = 180;
-        float hullHeight = 50;
+        // Hull dimensions (scaled)
+        float hullWidth = S(180);
+        float hullHeight = S(50);
 
         // Main hull body
         renderer.DrawFilledEllipse(spriteBatch, new Vector2(centerX, centerY), hullWidth, hullHeight,
-            StartupAnimationConfig.SubmarineColor);
+            SubmarineColor);
 
         // Conning tower
-        float towerWidth = 35;
-        float towerHeight = 30;
+        float towerWidth = S(35);
+        float towerHeight = S(30);
         var towerRect = new Rectangle(
             (int)(centerX - towerWidth / 2),
-            (int)(centerY - hullHeight / 2 - towerHeight + 5),
+            (int)(centerY - hullHeight / 2 - towerHeight + S(5)),
             (int)towerWidth,
             (int)towerHeight
         );
-        renderer.DrawRectangle(spriteBatch, towerRect, StartupAnimationConfig.SubmarineColor);
+        renderer.DrawRectangle(spriteBatch, towerRect, SubmarineColor);
 
         // Tower top (rounded)
         renderer.DrawFilledEllipse(spriteBatch,
-            new Vector2(centerX, centerY - hullHeight / 2 - towerHeight + 5),
-            towerWidth, 15, StartupAnimationConfig.SubmarineColor);
+            new Vector2(centerX, centerY - hullHeight / 2 - towerHeight + S(5)),
+            towerWidth, S(15), SubmarineColor);
 
         // Propeller area
-        float propX = centerX + hullWidth / 2 - 10;
-        renderer.DrawFilledEllipse(spriteBatch, new Vector2(propX, centerY), 20, 35,
-            StartupAnimationConfig.SubmarineColor);
+        float propX = centerX + hullWidth / 2 - S(10);
+        renderer.DrawFilledEllipse(spriteBatch, new Vector2(propX, centerY), S(20), S(35),
+            SubmarineColor);
 
         // Periscope
         var periscopeRect = new Rectangle(
-            (int)(centerX + 5),
-            (int)(centerY - hullHeight / 2 - towerHeight - 15),
-            3,
-            20
+            (int)(centerX + S(5)),
+            (int)(centerY - hullHeight / 2 - towerHeight - S(15)),
+            SiMin1(3),
+            Si(20)
         );
-        renderer.DrawRectangle(spriteBatch, periscopeRect, StartupAnimationConfig.SubmarineColor);
+        renderer.DrawRectangle(spriteBatch, periscopeRect, SubmarineColor);
 
         // Highlight on hull
         renderer.DrawFilledEllipse(spriteBatch,
-            new Vector2(centerX - 20, centerY - 10),
-            100, 15, StartupAnimationConfig.SubmarineHighlight * 0.3f);
+            new Vector2(centerX - S(20), centerY - S(10)),
+            S(100), S(15), SubmarineHighlight * 0.3f);
     }
 }

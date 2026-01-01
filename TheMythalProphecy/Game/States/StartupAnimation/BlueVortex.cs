@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using static TheMythalProphecy.Game.States.StartupAnimation.StartupAnimationConfig;
 
 namespace TheMythalProphecy.Game.States.StartupAnimation;
 
@@ -57,7 +58,7 @@ public class BlueVortex
         }
 
         float time = phaseElapsed * 0.5f; // Slow, gentle animation
-        float maxRadius = MathF.Sqrt(_screenWidth * _screenWidth + _screenHeight * _screenHeight) / 2f + 50;
+        float maxRadius = MathF.Sqrt(_screenWidth * _screenWidth + _screenHeight * _screenHeight) / 2f + S(50);
 
         // Draw vortex elements (fade out during end flash)
         if (vortexOpacity > 0.01f)
@@ -76,11 +77,11 @@ public class BlueVortex
             // Subtle flowing waves
             DrawFlowingWaves(spriteBatch, renderer, time, maxRadius, vortexOpacity);
 
-            // Mystical center glow
-            float coreSize = 180f + MathF.Sin(time * 1.5f) * 15f;
+            // Mystical center glow (scaled)
+            float coreSize = S(180f) + MathF.Sin(time * 1.5f) * S(15f);
             for (int i = 4; i >= 0; i--)
             {
-                float glowRadius = coreSize + i * 70f;
+                float glowRadius = coreSize + i * S(70f);
                 float glowOpacity = vortexOpacity * (0.08f - i * 0.012f);
                 renderer.DrawFilledCircle(spriteBatch, _center, glowRadius, StarGlow * glowOpacity);
             }
@@ -112,8 +113,8 @@ public class BlueVortex
             // Very slow rotation, alternating directions
             float rotation = time * (0.3f + i * 0.1f) * (i % 2 == 0 ? 1 : -1);
 
-            // Gentle breathing
-            float breath = MathF.Sin(time * 1.2f + i * 0.8f) * 15f;
+            // Gentle breathing (scaled)
+            float breath = MathF.Sin(time * 1.2f + i * 0.8f) * S(15f);
             float radius = baseRadius + breath;
 
             // Blend from cosmic blue to mystic blue
@@ -143,7 +144,7 @@ public class BlueVortex
             Vector2 p1 = _center + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * radius;
             Vector2 p2 = _center + new Vector2(MathF.Cos(nextAngle), MathF.Sin(nextAngle)) * radius;
 
-            renderer.DrawLine(spriteBatch, p1, p2, color * fadePattern, 4);
+            renderer.DrawLine(spriteBatch, p1, p2, color * fadePattern, Si(4));
         }
     }
 
@@ -171,8 +172,8 @@ public class BlueVortex
             float radius = maxRadius * (0.2f + t * 0.7f);
             float spiralAngle = baseAngle + spiralSpeed + t * MathF.PI * 1.5f;
 
-            // Soft size variation
-            float size = 8f + MathF.Sin(t * MathF.PI) * 12f;
+            // Soft size variation (scaled)
+            float size = S(8f) + MathF.Sin(t * MathF.PI) * S(12f);
 
             // Fade at edges
             float edgeFade = MathF.Sin(t * MathF.PI);
@@ -214,11 +215,11 @@ public class BlueVortex
         renderer.DrawRectangle(spriteBatch, new Rectangle(0, 0, _screenWidth, _screenHeight),
             StarFlashCore * coreOpacity);
 
-        // Central bright glow
-        float coreRadius = 200f + flashIntensity * 150f;
+        // Central bright glow (scaled)
+        float coreRadius = S(200f) + flashIntensity * S(150f);
         for (int i = 0; i < 4; i++)
         {
-            float glowRadius = coreRadius + i * 80f;
+            float glowRadius = coreRadius + i * S(80f);
             float glowOpacity = flashIntensity * (0.6f - i * 0.12f);
             renderer.DrawFilledCircle(spriteBatch, _center, glowRadius, StarFlashCore * glowOpacity);
         }
@@ -231,23 +232,23 @@ public class BlueVortex
         {
             float angle = (i / (float)rayCount) * MathF.PI * 2f;
 
-            // Alternating long and short rays for star effect
+            // Alternating long and short rays for star effect (scaled)
             bool isLongRay = i % 2 == 0;
             float rayLength = isLongRay ? rayExpansion : rayExpansion * 0.6f;
-            float rayWidth = isLongRay ? 8f : 5f;
+            float rayWidth = isLongRay ? S(8f) : S(5f);
 
             // Ray fades as it extends
             float rayOpacity = flashIntensity * (isLongRay ? 0.7f : 0.5f);
 
             Vector2 rayDir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-            Vector2 rayStart = _center + rayDir * 20f;
+            Vector2 rayStart = _center + rayDir * S(20f);
             Vector2 rayEnd = _center + rayDir * rayLength;
 
             // Draw ray with gradient (thick at center, thin at end)
             DrawTaperedRay(spriteBatch, renderer, rayStart, rayEnd, rayWidth, rayOpacity);
         }
 
-        // Secondary smaller rays between main rays
+        // Secondary smaller rays between main rays (scaled)
         for (int i = 0; i < rayCount; i++)
         {
             float angle = ((i + 0.5f) / rayCount) * MathF.PI * 2f;
@@ -256,13 +257,13 @@ public class BlueVortex
             float rayOpacity = flashIntensity * 0.3f;
 
             Vector2 rayDir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-            Vector2 rayStart = _center + rayDir * 30f;
+            Vector2 rayStart = _center + rayDir * S(30f);
             Vector2 rayEnd = _center + rayDir * rayLength;
 
-            DrawTaperedRay(spriteBatch, renderer, rayStart, rayEnd, 3f, rayOpacity);
+            DrawTaperedRay(spriteBatch, renderer, rayStart, rayEnd, S(3f), rayOpacity);
         }
 
-        // Sparkle points at ray tips (for long rays)
+        // Sparkle points at ray tips (for long rays) (scaled)
         for (int i = 0; i < rayCount; i += 2)
         {
             float angle = (i / (float)rayCount) * MathF.PI * 2f;
@@ -271,11 +272,11 @@ public class BlueVortex
             Vector2 rayDir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
             Vector2 sparklePos = _center + rayDir * rayLength;
 
-            // Only draw sparkles after rays have extended a bit
-            if (rayLength > 100f)
+            // Only draw sparkles after rays have extended a bit (scaled threshold)
+            if (rayLength > S(100f))
             {
                 float sparkleOpacity = flashIntensity * 0.8f;
-                float sparkleSize = 6f + MathF.Sin(phaseElapsed * 20f + i) * 2f;
+                float sparkleSize = S(6f) + MathF.Sin(phaseElapsed * 20f + i) * S(2f);
                 renderer.DrawFilledCircle(spriteBatch, sparklePos, sparkleSize, StarFlashCore * sparkleOpacity);
             }
         }
@@ -302,7 +303,7 @@ public class BlueVortex
             Vector2 p2 = start + direction * (length * t2);
 
             // Width tapers from maxWidth to 1
-            float width = MathHelper.Lerp(maxWidth, 1f, (t1 + t2) / 2f);
+            float width = MathHelper.Lerp(maxWidth, S(1f), (t1 + t2) / 2f);
 
             // Opacity fades toward the end
             float segmentOpacity = opacity * (1f - t1 * 0.7f);
@@ -310,7 +311,7 @@ public class BlueVortex
             // Color transitions from core to outer
             Color segmentColor = Color.Lerp(StarFlashCore, StarFlashMid, t1);
 
-            renderer.DrawLine(spriteBatch, p1, p2, segmentColor * segmentOpacity, (int)MathF.Ceiling(width));
+            renderer.DrawLine(spriteBatch, p1, p2, segmentColor * segmentOpacity, Math.Max(1, (int)MathF.Ceiling(width)));
         }
     }
 }

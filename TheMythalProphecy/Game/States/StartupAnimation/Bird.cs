@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using static TheMythalProphecy.Game.States.StartupAnimation.StartupAnimationConfig;
 
 namespace TheMythalProphecy.Game.States.StartupAnimation;
 
@@ -20,20 +21,20 @@ public class Bird
 
     private static readonly Color BirdColor = new(40, 35, 30);
 
-    public bool IsExpired => _x > _screenWidth + 30;
+    public bool IsExpired => _x > _screenWidth + S(30);
 
     public Bird(int screenWidth, int screenHeight, bool randomX = false)
     {
         _screenWidth = screenWidth;
 
         // Start from left side (ship speeding past them westward, birds appear to drift right)
-        _x = randomX ? Random.Shared.NextSingle() * screenWidth : -20;
+        _x = randomX ? Random.Shared.NextSingle() * screenWidth : -S(20);
 
         // Random Y - birds fly in upper/middle area
         _y = Random.Shared.NextSingle() * screenHeight * 0.5f + screenHeight * 0.15f;
 
-        // Birds move slower than clouds (ship is faster than birds)
-        _speed = 15f + Random.Shared.NextSingle() * 20f;
+        // Birds move slower than clouds (ship is faster than birds) - scaled
+        _speed = S(15f) + Random.Shared.NextSingle() * S(20f);
 
         // Small birds
         _scale = 0.6f + Random.Shared.NextSingle() * 0.5f;
@@ -53,11 +54,11 @@ public class Bird
 
     public void Draw(SpriteBatch spriteBatch, PrimitiveRenderer renderer)
     {
-        // Wing flap animation
+        // Wing flap animation (scaled)
         float flapAngle = MathF.Sin(_time * _flapSpeed + _flapOffset);
-        float wingY = flapAngle * 4 * _scale;
+        float wingY = flapAngle * S(4) * _scale;
 
-        float size = 8 * _scale;
+        float size = S(8) * _scale;
 
         // Body (small circle)
         renderer.DrawFilledCircle(spriteBatch, new Vector2(_x, _y), size * 0.4f, BirdColor);
@@ -65,11 +66,11 @@ public class Bird
         // Left wing - simple V shape
         Vector2 bodyLeft = new(_x - size * 0.3f, _y);
         Vector2 wingLeftTip = new(_x - size * 1.5f, _y - wingY - size * 0.3f);
-        renderer.DrawLine(spriteBatch, bodyLeft, wingLeftTip, BirdColor, (int)(2 * _scale));
+        renderer.DrawLine(spriteBatch, bodyLeft, wingLeftTip, BirdColor, Math.Max(1, Si(2 * _scale)));
 
         // Right wing
         Vector2 bodyRight = new(_x + size * 0.3f, _y);
         Vector2 wingRightTip = new(_x + size * 1.5f, _y - wingY - size * 0.3f);
-        renderer.DrawLine(spriteBatch, bodyRight, wingRightTip, BirdColor, (int)(2 * _scale));
+        renderer.DrawLine(spriteBatch, bodyRight, wingRightTip, BirdColor, Math.Max(1, Si(2 * _scale)));
     }
 }

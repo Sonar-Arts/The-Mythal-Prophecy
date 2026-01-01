@@ -102,29 +102,42 @@ public class PrimitiveRenderer : IDisposable
         if (p1.Y > p3.Y) (p1, p3) = (p3, p1);
         if (p2.Y > p3.Y) (p2, p3) = (p3, p2);
 
-        // Fill triangle with horizontal lines
-        for (float y = p1.Y; y <= p3.Y; y++)
+        // Use integer Y coordinates to prevent scanline gaps
+        int yStart = (int)MathF.Floor(p1.Y);
+        int yMid = (int)MathF.Ceiling(p2.Y);
+        int yEnd = (int)MathF.Ceiling(p3.Y);
+
+        // Fill triangle with horizontal lines (height 2 for overlap to prevent gaps)
+        for (int y = yStart; y <= yEnd; y++)
         {
             float x1, x2;
 
-            if (y < p2.Y)
+            if (y < yMid)
             {
                 float t1 = (y - p1.Y) / (p2.Y - p1.Y + 0.001f);
                 float t2 = (y - p1.Y) / (p3.Y - p1.Y + 0.001f);
-                x1 = MathHelper.Lerp(p1.X, p2.X, t1);
-                x2 = MathHelper.Lerp(p1.X, p3.X, t2);
+                x1 = MathHelper.Lerp(p1.X, p2.X, MathHelper.Clamp(t1, 0f, 1f));
+                x2 = MathHelper.Lerp(p1.X, p3.X, MathHelper.Clamp(t2, 0f, 1f));
             }
             else
             {
                 float t1 = (y - p2.Y) / (p3.Y - p2.Y + 0.001f);
                 float t2 = (y - p1.Y) / (p3.Y - p1.Y + 0.001f);
-                x1 = MathHelper.Lerp(p2.X, p3.X, t1);
-                x2 = MathHelper.Lerp(p1.X, p3.X, t2);
+                x1 = MathHelper.Lerp(p2.X, p3.X, MathHelper.Clamp(t1, 0f, 1f));
+                x2 = MathHelper.Lerp(p1.X, p3.X, MathHelper.Clamp(t2, 0f, 1f));
             }
 
             if (x1 > x2) (x1, x2) = (x2, x1);
 
-            spriteBatch.Draw(_pixel, new Rectangle((int)x1, (int)y, (int)(x2 - x1) + 1, 1), color);
+            int left = (int)MathF.Floor(x1);
+            int right = (int)MathF.Ceiling(x2);
+            int width = right - left + 1;
+
+            if (width > 0)
+            {
+                // Draw with height 2 to ensure overlap and prevent gaps between scanlines
+                spriteBatch.Draw(_pixel, new Rectangle(left, y, width, 2), color);
+            }
         }
     }
 

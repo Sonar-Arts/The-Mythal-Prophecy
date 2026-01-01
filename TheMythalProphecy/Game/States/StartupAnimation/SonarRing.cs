@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using static TheMythalProphecy.Game.States.StartupAnimation.StartupAnimationConfig;
 
 namespace TheMythalProphecy.Game.States.StartupAnimation;
 
@@ -30,8 +31,8 @@ public class SonarRing
         _endColor = endColor;
         _colorTransition = 0f;
         MaxRadius = maxRadius;
-        Radius = StartupAnimationConfig.SonarInitialRadius;
-        Speed = StartupAnimationConfig.SonarBaseSpeed + Random.Shared.NextSingle() * StartupAnimationConfig.SonarSpeedVariance;
+        Radius = SonarInitialRadius;
+        Speed = SonarBaseSpeed + Random.Shared.NextSingle() * SonarSpeedVariance;
         Opacity = 1f;
     }
 
@@ -54,13 +55,13 @@ public class SonarRing
     public void Draw(SpriteBatch spriteBatch, PrimitiveRenderer renderer)
     {
         Color ringColor = CurrentColor * Opacity;
-        renderer.DrawCircleOutline(spriteBatch, Center, Radius, ringColor, 3);
+        renderer.DrawCircleOutline(spriteBatch, Center, Radius, ringColor, SiMin1(3));
 
-        // Inner glow for more visual impact
+        // Inner glow for more visual impact (scaled offset)
         if (Opacity > 0.5f)
         {
             Color glowColor = CurrentColor * ((Opacity - 0.5f) * 0.5f);
-            renderer.DrawCircleOutline(spriteBatch, Center, Radius - 5, glowColor, 2);
+            renderer.DrawCircleOutline(spriteBatch, Center, Radius - S(5), glowColor, SiMin1(2));
         }
     }
 }

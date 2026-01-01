@@ -96,6 +96,9 @@ public class StartupAnimationState : IGameState
         _screenWidth = GameServices.GraphicsDevice.Viewport.Width;
         _screenHeight = GameServices.GraphicsDevice.Viewport.Height;
 
+        // Initialize resolution-independent scaling (reference: 1920x1080)
+        StartupAnimationConfig.InitializeScale(_screenWidth, _screenHeight);
+
         // Initialize renderers
         _renderer = new PrimitiveRenderer(GameServices.GraphicsDevice);
         _backgroundRenderer = new BackgroundRenderer(_screenWidth, _screenHeight);
@@ -617,8 +620,8 @@ public class StartupAnimationState : IGameState
         float centerX = _screenWidth * 0.5f;
         float centerY = _screenHeight * 0.5f;
 
-        float x = centerX + (Random.Shared.NextSingle() - 0.5f) * 120;
-        float y = randomY ? Random.Shared.NextSingle() * _screenHeight : centerY - 20;
+        float x = centerX + (Random.Shared.NextSingle() - 0.5f) * StartupAnimationConfig.S(120);
+        float y = randomY ? Random.Shared.NextSingle() * _screenHeight : centerY - StartupAnimationConfig.S(20);
 
         _bubbles.Add(new Bubble(x, y));
     }
@@ -694,7 +697,7 @@ public class StartupAnimationState : IGameState
     {
         // Track reveal progress (only increases, never decreases)
         float currentRadius = _sonarSystem.GetLargestRadius();
-        float targetReveal = MathHelper.Clamp(currentRadius / 150f, 0f, 1f);
+        float targetReveal = MathHelper.Clamp(currentRadius / StartupAnimationConfig.S(150f), 0f, 1f);
         if (targetReveal > _logoRevealAmount)
             _logoRevealAmount = targetReveal;
 
